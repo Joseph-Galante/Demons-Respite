@@ -91,6 +91,7 @@ class Rectangle
                     {
                         // gain gold
                         player.gold += 2;
+                        console.log(`Gold: ${player.gold}`);
                         // remove enemy
                         enemies.splice(enemies.indexOf(enemy), 1);
                     }
@@ -111,10 +112,39 @@ class Player extends Rectangle
 
 class Enemy extends Rectangle
 {
-    constructor (x, y)
+    constructor (x, y, dir)
     {
-        super(x, y, 40, 40, 'green');
+        super(x, y, 40, 40, 'red');
         this.alive = true;
+        this.startPos = [this.x, this.y];
+        this.movingUp = false;
+        this.movingRight = false;
+        this.movingLeft = false;
+        this.movingDown = false;
+
+        switch (dir)
+        {
+            case 'up':
+                {
+                    this.movingUp = true;
+                    break;
+                }
+            case 'right':
+                {
+                    this.movingRight = true;
+                    break;
+                }
+            case 'left':
+                {
+                    this.movingLeft = true;
+                    break;
+                }
+            case 'down':
+                {
+                    this.movingDown = true;
+                    break;
+                }
+        }
     }
 
     position ()
@@ -126,14 +156,41 @@ class Enemy extends Rectangle
     {
         super.render();
 
-        // move enemy back and forth
-        // get start position
-        let startPos = [this.x, this.y];
-        // move up until 100px above start pos
-        while (this.position()[1] > startPos[1] + 100)
+        if (this.alive)
         {
-            this.y -= ENEMY_SPEED;
+
+            // move enemy back and forth
+            // move up until 100px above start pos
+            if (this.movingUp)
+            {
+                if (this.position()[1] > this.startPos[1] - 150)
+            {
+                this.y -= ENEMY_SPEED;
+            }
+            else
+            {
+                this.movingUp = false;
+                this.movingDown = true;
+            }
+            }
+            else if (this.movingDown)
+            {
+                if (this.position()[1] < this.startPos[1] + 50)
+                {
+                    this.y += ENEMY_SPEED;
+                }
+                else
+                {
+                    this.movingDown = false;
+                    this.movingUp = true;
+                }
+            }
         }
+    }
+
+    checkCollisions ()
+    {
+        
     }
 }
 
@@ -149,7 +206,7 @@ class Floor extends Rectangle
 {
     constructor (x, y)
     {
-        super(x, y, 50, 50, 'gray');
+        super(x, y, 50, 50, 'green');
     }
 }
 
@@ -222,9 +279,9 @@ const player = new Player(50, 230, 30, 30, 'blue');
 // create enemies
 const enemies =
 [
-    new Enemy(300, 300),
-    new Enemy(100, 350),
-    new Enemy(360, 70)
+    new Enemy(300, 300, 'up'),
+    // new Enemy(100, 350),
+    // new Enemy(360, 70)
 ]
 // create walls
 const walls = makeWalls();
