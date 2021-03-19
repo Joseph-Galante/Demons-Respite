@@ -1,3 +1,4 @@
+/***** Canvas Setup *****/
 // grab canvas
 const canvas = document.querySelector('canvas');
 
@@ -7,6 +8,14 @@ canvas.setAttribute('width', getComputedStyle(canvas).width);
 
 // get 2D context
 const context = canvas.getContext('2d');
+
+
+/***** Constants *****/
+const PLAYER_SPEED = 5;
+const ENEMY_SPEED = 3;
+
+
+/***** Classes *****/
 
 class Rectangle
 {
@@ -52,14 +61,51 @@ class Rectangle
         // check collisions with enemies
         enemies.forEach (enemy =>
         {
-            if (player.right() > enemy.left() && player.left() < enemy.right())
+            // check if enemy is alive
+            if (enemy.alive)
             {
-                if (player.bottom() > enemy.top() && player.top() < enemy.bottom())
+                // check player's left/right
+                if (player.right() > enemy.left() && player.left() < enemy.right())
                 {
-                    console.log('hit enemy');
+                    // check player's top/bottom
+                    if (player.bottom() > enemy.top() && player.top() < enemy.bottom())
+                    {
+                        // turn enemy to dust and bones
+                        enemy.alive = false;
+                        enemy.color = 'yellow';
+                        enemy.width = 25;
+                        enemy.height = 25;
+                        enemy.x += 6.25;
+                        enemy.y += 6.25;
+                    }
+                }
+            }
+            // enemy is dead
+            else
+            {
+                // check player's left/right
+                if (player.right() > enemy.left() && player.left() < enemy.right())
+                {
+                    // check player's top/bottom
+                    if (player.bottom() > enemy.top() && player.top() < enemy.bottom())
+                    {
+                        // gain gold
+                        player.gold += 2;
+                        // remove enemy
+                        enemies.splice(enemies.indexOf(enemy), 1);
+                    }
                 }
             }
         })
+    }
+}
+
+class Player extends Rectangle
+{
+    constructor (x, y)
+    {
+        super(x, y, 30, 30, 'blue');
+        this.gold = 0;
     }
 }
 
@@ -68,6 +114,26 @@ class Enemy extends Rectangle
     constructor (x, y)
     {
         super(x, y, 40, 40, 'green');
+        this.alive = true;
+    }
+
+    position ()
+    {
+        return [this.x, this.y];
+    }
+
+    render ()
+    {
+        super.render();
+
+        // move enemy back and forth
+        // get start position
+        let startPos = [this.x, this.y];
+        // move up until 100px above start pos
+        while (this.position()[1] > startPos[1] + 100)
+        {
+            this.y -= ENEMY_SPEED;
+        }
     }
 }
 
@@ -83,7 +149,7 @@ class Floor extends Rectangle
 {
     constructor (x, y)
     {
-        super(x, y, 50, 50, 'yellow');
+        super(x, y, 50, 50, 'gray');
     }
 }
 
@@ -94,6 +160,9 @@ class Door extends Rectangle
         super(x, y, 50, 50, 'black');
     }
 }
+
+
+/***** Event Listeners *****/
 
 // player movement - handles canvas collisions as well
 document.addEventListener('keydown', (event) =>
@@ -106,7 +175,7 @@ document.addEventListener('keydown', (event) =>
         }
         else
         {
-            player.y -= 5;
+            player.y -= PLAYER_SPEED;
         }  
     }
     else if (event.key === 'a')
@@ -117,7 +186,7 @@ document.addEventListener('keydown', (event) =>
         }
         else
         {
-            player.x -= 5;
+            player.x -= PLAYER_SPEED;
         }  
     }
     else if (event.key === 's')
@@ -128,7 +197,7 @@ document.addEventListener('keydown', (event) =>
         }
         else
         {
-            player.y += 5;
+            player.y += PLAYER_SPEED;
         }  
     }
     else if (event.key === 'd')
@@ -139,20 +208,23 @@ document.addEventListener('keydown', (event) =>
         }
         else
         {
-            player.x += 5;
+            player.x += PLAYER_SPEED;
         }  
     }
 });
 
+
+/***** Setup *****/
+
 // create player
-const player = new Rectangle(100, 100, 30, 30, 'blue');
+const player = new Player(50, 230, 30, 30, 'blue');
+
 // create enemies
 const enemies =
 [
-    new Enemy(200, 200),
-    // new Enemy(50, 250),
-    // new Enemy(300, 350),
-    // new Enemy(400, 50)
+    new Enemy(300, 300),
+    new Enemy(100, 350),
+    new Enemy(360, 70)
 ]
 // create walls
 const walls = makeWalls();
@@ -160,6 +232,7 @@ const walls = makeWalls();
 const floors = makeFloors();
 // create doors
 const doors = makeDoors();
+
 
 /*===================== Game Loop ======================*/
 const animate = () =>
@@ -185,6 +258,9 @@ const animate = () =>
 
 // Start
 animate();
+
+
+/***** Functions *****/
 
 // Create walls
 function makeWalls ()
