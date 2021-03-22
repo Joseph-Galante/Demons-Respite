@@ -11,28 +11,154 @@ const context = canvas.getContext('2d');
 
 
 /***** Constants *****/
-const PLAYER_SPEED = 5;
-const ENEMY_SPEED = 1;
+const PLAYER_SPEED = 10;
+const ENEMY_SPEED = 0.7;
 const ENEMY_WALK_RANGE = 400;
+const ENEMY_SIGHT_RANGE = 150;
+const ENEMY_ATTACK_RANGE = 50;
 
 
 /***** Classes *****/
-class Scene
+class SceneManager
 {
-    constructor(walls, floors, doors, enemies)
+    constructor(scenes)
     {
-        this.walls = walls;
-        this.floors = floors;
-        this.doors = doors;
-        this.enemies = enemies;
+        this.scenes = scenes;
+        this.currentScene;
     }
 
-    loadScene ()
+    scene ()
     {
-        this.floors.forEach(floor => floor.render());
-        this.doors.forEach(door => door.render());
-        this.walls.forEach(wall => wall.render());
-        this.enemies.forEach(enemy => enemy.render());
+        return this.currentScene;
+    }
+    
+    changeScene ()
+    {
+        // pick a random scene
+        currentScene = eval('scene' + Math.floor(Math.random() * this.scenes.length));
+    }
+
+    loadScene (scene)
+    {
+        this.currentScene = scene;
+        scene.floors.forEach(floor => floor.render());
+        scene.doors.forEach(door => door.render());
+        scene.walls.forEach(wall => wall.render());
+        scene.enemies.forEach(enemy => enemy.render());
+    }
+}
+class Scene
+{
+    constructor(name)
+    {
+        this.name = name;
+        this.walls = [];
+        this.floors = [];
+        this.doors = [];
+        this.enemies = [];
+    }
+
+    makeScene (pillars, enemies)
+    {
+        this.makeWalls(pillars);
+        this.makeFloors();
+        this.makeDoors();
+        this.makeEnemies(enemies);
+    }
+
+    // Create walls
+    makeWalls (pillars)
+    {
+        // walls array
+        const walls = [];
+
+        // border needs 32 walls
+        // top side
+        for (let i = 0; i <= 10; i++)
+        {
+            walls.push(new Wall(i * 50, 0));
+        }
+        // bottom
+        for (let i = 0; i <= 10; i++)
+        {
+            walls.push(new Wall(i * 50, canvas.height - 50));
+        }
+        // left
+        for (let i = 1; i <= 8; i++)
+        {
+            if (i === 4 || i === 5)
+            {
+                continue;
+            }
+            walls.push(new Wall(0, i * 50));
+        }
+        // right
+        for (let i = 1; i <= 8; i++)
+        {
+            if (i == 4 || i === 5)
+            {
+                continue;
+            }
+            walls.push(new Wall(canvas.width - 50, i * 50));
+        }
+
+        // pillars
+        pillars.forEach(wall =>
+        {
+            if (wall)
+            {
+                walls.push(new Wall(wall[0] * 50, wall[1] * 50));
+            }
+        })
+
+        this.walls = walls;
+    }
+
+    // Create floors
+    makeFloors ()
+    {
+        // floors array
+        const floors = [];
+
+        // floors are 8x8
+        // loop through rows
+        for (let i = 1; i <= 8; i++)
+        {
+            // loop through columns
+            for (let j = 1; j <= 8; j++)
+            {
+                floors.push(new Floor(i * 50, j * 50))
+            }
+        }
+
+        this.floors = floors;
+    }
+
+    // Create doors
+    makeDoors ()
+    {
+        // doors array
+        const doors = [];
+
+        // doors are 2x1, centered on right and left sides
+        // left side
+        for (let i = 4; i <= 5; i++)
+        {
+            doors.push(new Door(0, i * 50));
+        }
+        // right side
+        for (let i = 4; i <= 5; i++)
+        {
+            doors.push(new Door(canvas.width - 50, i * 50));
+        }
+
+        this.doors = doors;
+    }
+
+    // Create enemies
+    makeEnemies (enemies)
+    {
+        this.enemies = enemies;
     }
 }
 
@@ -141,7 +267,7 @@ class Player extends Rectangle
     isCollidingWith ()
     {
         // check collisions with walls in scene
-        scene.walls.forEach(wall =>
+        sceneManager.scene().walls.forEach(wall =>
         {
             //check top/bottom
             if (this.top() < wall.bottom() && this.bottom() > wall.top())
@@ -174,7 +300,7 @@ class Player extends Rectangle
         })
 
         // check collisions with enemies of scene
-        scene.enemies.forEach(enemy =>
+        sceneManager.scene().enemies.forEach(enemy =>
         {
             //check top/bottom
             if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
@@ -207,7 +333,7 @@ class Player extends Rectangle
             }
         })
 
-        scene.doors.forEach(door =>
+        sceneManager.scene().doors.forEach(door =>
         {
             //check top/bottom
             if (this.top() < door.bottom() && this.bottom() > door.top())
@@ -241,7 +367,11 @@ class Player extends Rectangle
                     }
                     else
                     {
-                        // load to next scene
+                        // load next scene
+                        sceneManager.changeScene();
+                        // place player at front of door
+                        player.x = 50;
+                        player.y = 230;
                     }
                 }
             }   
@@ -265,7 +395,10 @@ class Enemy extends Rectangle
             chase: 'chase',
             attack: 'attack'
         };
-        this.moveState = this.moveStates.chase;
+        this.moveState = this.moveStates.patrol;
+        this.destination;
+        this.destinationReached = false;
+        this.destinationSet = false;
 
         // initialize starting direction
         switch (dir)
@@ -366,18 +499,48 @@ class Enemy extends Rectangle
         }
     }
 
+    // find distance to player's center
+    distanceToPlayer ()
+    {
+        return Math.sqrt(Math.pow((player.x + player.width / 2) - (this.x + this.width / 2), 2) + Math.pow((player.y + player.height / 2) - (this.y + this.height / 2), 2));
+    }
+
+    distanceToPoint (point)
+    {
+        return Math.sqrt(Math.pow(point[0] - this.x, 2) + Math.pow(point[1] - this.y, 2));
+    }
+
     render ()
     {
         super.render();
-        // console.log(this.position())
         // check if enemy is alive
         if (this.alive)
         {
+            //check if player is outside of sight range
+            if (this.distanceToPlayer() > ENEMY_SIGHT_RANGE)
+            {
+                // patrol
+                this.moveState = this.moveStates.patrol;
+            }
+            // check for player within sight range
+            else if (this.distanceToPlayer() < ENEMY_SIGHT_RANGE && this.distanceToPlayer() > ENEMY_ATTACK_RANGE)
+            {
+                // chase
+                this.moveState = this.moveStates.chase;
+            }
+            // check for player within attack range
+            else if (this.distanceToPlayer() < ENEMY_ATTACK_RANGE)
+            {
+                // attack
+                this.moveState = this.moveStates.attack;
+            }
+
+            // movement based on current move state
             switch (this.moveState)
             {
+                // patrolling
                 case this.moveStates.patrol:
                     {
-
                         // move enemy back and forth
                         // move up
                         if (this.movingUp)
@@ -392,7 +555,7 @@ class Enemy extends Rectangle
                                 this.newDirection();
                             }
                             
-                            if (Math.floor(Math.random() * 100) === 0)
+                            if (Math.floor(Math.random() * 300) === 0)
                             {   
                                 this.newDirection();
                             }
@@ -409,7 +572,7 @@ class Enemy extends Rectangle
                                 this.newDirection();
                             }
                             
-                            if (Math.floor(Math.random() * 100) === 0)
+                            if (Math.floor(Math.random() * 300) === 0)
                             {   
                                 this.newDirection();
                             }
@@ -426,7 +589,7 @@ class Enemy extends Rectangle
                                 this.newDirection();
                             }
                             
-                            if (Math.floor(Math.random() * 100) === 0)
+                            if (Math.floor(Math.random() * 300) === 0)
                             {   
                                 this.newDirection();
                             }
@@ -443,21 +606,39 @@ class Enemy extends Rectangle
                                 this.newDirection();
                             }
                             
-                            if (Math.floor(Math.random() * 100) === 0)
+                            if (Math.floor(Math.random() * 300) === 0)
                             {   
                                 this.newDirection();
                             }
                         }
+
+                        break;
                     }
+                // chasing
                 case this.moveStates.chase:
                     {
-                        this.y -= (this.y - player.y + player.height / 2) / (this.y - player.y + player.height / 2)
+                        // move towards player
+                        this.x -= (this.x - player.x) / this.distanceToPoint(player.position());
+                        this.y -= (this.y - player.y) / this.distanceToPoint(player.position());
+
+                        break;
+                    }
+                // attacking
+                case this.moveStates.attack:
+                    {
+                        // stop moving
+                        this.x = this.x;
+                        this.y = this.y;
+
+                        // attack
+                        // setTimeout(attack, 500);
+                        break;
                     }
             }
         }
         
         // check collisions with walls in scene
-        scene.walls.forEach(wall =>
+        sceneManager.scene().walls.forEach(wall =>
             {
                 //check top/bottom
                 if (this.top() < wall.bottom() && this.bottom() > wall.top())
@@ -493,7 +674,7 @@ class Enemy extends Rectangle
                 }
             })
         // check collisions with doors in scene
-        scene.doors.forEach(door =>
+        sceneManager.scene().doors.forEach(door =>
             {
                 //check top/bottom
                 if (this.top() < door.bottom() && this.bottom() > door.top())
@@ -588,7 +769,7 @@ class Door extends Rectangle
     {
         super.render();
         // check for empty room
-        if (scene.enemies.length > 0)
+        if (sceneManager.scene().enemies.length > 0)
         {
             // enemies or gold remaining - lock doors
             this.locked();
@@ -666,28 +847,38 @@ document.addEventListener('keydown', (event) =>
 });
 
 
+/***** Scenes  *****/
+
+// array of scenes
+let scenes = [];
+
+// create scene
+const scene0 = new Scene('scene0');
+// populate scene
+scene0.makeScene([[2,2], [7,2], [2,7], [7,7]], [
+    // new Enemy(300, 300, 'up'),
+    // new Enemy(100, 350),
+    // new Enemy(360, 70)
+])
+// add scene to scene list
+scenes.push(scene0);
+
+const scene1 = new Scene('scene1');
+scene1.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
+    new Enemy(300, 250, 'down')
+])
+scenes.push(scene1);
+
 /***** Setup *****/
 
 // create player
 const player = new Player(50, 230, 30, 30, 'blue');
 
-// create enemies
-const enemies =
-[
-    // new Enemy(300, 300, 'up'),
-    // new Enemy(100, 350),
-    // new Enemy(360, 70)
-]
-// create walls
-const walls = makeWalls([0], [0], [4,5], [4,5], [[2, 2], [7, 2], [2, 7], [7, 7]]);
-// create floors
-const floors = makeFloors([[4,5], [5,5]]);
-// create doors
-const doors = makeDoors();
+// scene manager
+const sceneManager = new SceneManager(scenes);
 
-// track all objects in scene
-const scene = new Scene(walls, floors, doors, enemies);
-
+// first scene
+let currentScene = scene0;
 
 /*===================== Game Loop ======================*/
 const animate = () =>
@@ -695,11 +886,9 @@ const animate = () =>
     // clear canvas
     context.clearRect(0, 0, canvas.width, canvas.height);
     // render scene
-    scene.loadScene();
+    sceneManager.loadScene(currentScene);
     // render player
     player.render();
-    // render all enemies
-    enemies.forEach(enemy => enemy.render());
     // check for collisions
     player.isCollidingWith();
     // call animate again when possible
@@ -713,100 +902,11 @@ animate();
 
 /***** Functions *****/
 
-// Create walls
-function makeWalls (top, bottom, left, right, extra)
+function makeScenes ()
 {
-    // walls array
-    const walls = [];
+    // scenes array
+    const scenes = [];
 
-    // border needs 32 walls
-    // top side
-    for (let i = 0; i <= 10; i++)
-    {
-        if (top.includes(i) && i !== 0)
-        {
-            continue;
-        }
-        walls.push(new Wall(i * 50, 0));
-    }
-    // bottom
-    for (let i = 0; i <= 10; i++)
-    {
-        if (bottom.includes(i) && i !== 0)
-        {
-            continue;
-        }
-        walls.push(new Wall(i * 50, canvas.height - 50));
-    }
-    // left
-    for (let i = 1; i <= 8; i++)
-    {
-        if (left.includes(i) && i !== 0)
-        {
-            continue;
-        }
-        walls.push(new Wall(0, i * 50));
-    }
-    // right
-    for (let i = 1; i <= 8; i++)
-    {
-        if (right.includes(i) && i !== 0)
-        {
-            continue;
-        }
-        walls.push(new Wall(canvas.width - 50, i * 50));
-    }
-
-    // pillars
-    extra.forEach(wall =>
-    {
-        walls.push(new Wall(wall[0] * 50, wall[1] * 50));
-    })
-
-    return walls;
-}
-
-// Create floors
-function makeFloors (holes)
-{
-    // floors array
-    const floors = [];
-
-    // floors are 8x8
-    // loop through rows
-    for (let i = 1; i <= 8; i++)
-    {
-        // loop through columns
-        for (let j = 1; j <= 8; j++)
-        {
-            if (i === holes[0] && j === holes[1])
-            {
-                continue;
-            }
-            floors.push(new Floor(i * 50, j * 50))
-        }
-    }
-
-    return floors;
-}
-
-// Create doors
-function makeDoors ()
-{
-    // doors array
-    const doors = [];
-
-    // doors are 2x1, centered on right and left sides
-    // left side
-    for (let i = 4; i <= 5; i++)
-    {
-        doors.push(new Door(0, i * 50));
-    }
-    // right side
-    for (let i = 4; i <= 5; i++)
-    {
-        doors.push(new Door(canvas.width - 50, i * 50));
-    }
-
-    return doors;
+    // fill scene with walls, floors, doors, and enemies
+    
 }
