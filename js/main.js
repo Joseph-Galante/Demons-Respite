@@ -25,28 +25,43 @@ class SceneManager
     {
         this.scenes = scenes;
         this.currentScene;
+        this.changingScenes = false;
     }
 
-    scene ()
+    nextScene ()
     {
-        return this.currentScene;
+        // check if currently changing scenes - prevents multiple scene changes from entering a door 'once'
+        if (!this.changingScenes)
+        {
+            currentScene = this.scenes[this.scenes.indexOf(currentScene) + 1];
+            this.changingScenes = true;
+        }
     }
-    
-    changeScene ()
+
+    lastScene ()
     {
-        // pick a random scene
-        currentScene = eval('scene' + Math.floor(Math.random() * this.scenes.length));
+        // check if currently changing scenes - prevents multiple scene changes from entering a door 'once'
+        if (!this.changingScenes)
+        {
+            currentScene = this.scenes[this.scenes.indexOf(currentScene) - 1];
+            this.changingScenes = true;
+        }
     }
 
     loadScene (scene)
     {
         this.currentScene = scene;
+        // scene changed successfully
+        this.changingScenes = false;
+
+        // render scene
         scene.floors.forEach(floor => floor.render());
         scene.floors.forEach(floor => context.strokeRect(floor.x, floor.y, floor.width, floor.height));
         scene.doors.forEach(door => door.render());
         scene.walls.forEach(wall => wall.render());
         scene.enemies.forEach(enemy => enemy.render());
 
+        // render weapon if player is attacking
         if (player.attacking)
         {
             player.weapon.render();
@@ -54,6 +69,16 @@ class SceneManager
             {
                 player.attacking = false;
             }, 300)
+        }
+
+        // render shield if player is blocking
+        if (player.blocking)
+        {
+            player.shield.render();
+            setTimeout(function()
+            {
+                player.blocking = false;
+            }, 500)
         }
     }
 }
@@ -66,18 +91,20 @@ class Scene
         this.floors = [];
         this.doors = [];
         this.enemies = [];
+        this.prevDoors = [];
+        this.nextDoors = [];
     }
 
-    makeScene (pillars, enemies)
+    makeScene (pillars, enemies, start)
     {
-        this.makeWalls(pillars);
+        this.makeWalls(pillars, start);
         this.makeFloors();
-        this.makeDoors();
+        this.makeDoors(start);
         this.makeEnemies(enemies);
     }
 
     // Create walls
-    makeWalls (pillars)
+    makeWalls (pillars, start)
     {
         // walls array
         const walls = [];
@@ -96,9 +123,13 @@ class Scene
         // left
         for (let i = 1; i <= 8; i++)
         {
-            if (i === 4 || i === 5)
+            // only skip if not in starting room
+            if (!start)
             {
-                continue;
+                if (i === 4 || i === 5)
+                {
+                    continue;
+                }
             }
             walls.push(new Wall(0, i * 50));
         }
@@ -145,21 +176,30 @@ class Scene
     }
 
     // Create doors
-    makeDoors ()
+    makeDoors (start)
     {
         // doors array
         const doors = [];
 
         // doors are 2x1, centered on right and left sides
-        // left side
-        for (let i = 4; i <= 5; i++)
+
+        // check if in starting room - dont draw doors on left side
+        if (!start)
         {
-            doors.push(new Door(0, i * 50));
+            // left side
+            for (let i = 4; i <= 5; i++)
+            {
+                const newDoor = new Door(0, i * 50);
+                this.prevDoors.push(newDoor);
+                doors.push(newDoor);
+            }
         }
         // right side
         for (let i = 4; i <= 5; i++)
         {
-            doors.push(new Door(canvas.width - 50, i * 50));
+            const newDoor = new Door(canvas.width - 50, i * 50);
+            this.nextDoors.push(newDoor);
+            doors.push(newDoor);
         }
 
         this.doors = doors;
@@ -225,7 +265,9 @@ class Player extends Rectangle
         this.movingLeft = false;
         this.movingRight = false;
         this.weapon;
+        this.shield;
         this.attacking = false;
+        this.blocking = false;
     }
 
     type ()
@@ -298,6 +340,11 @@ class Player extends Rectangle
         this.weapon.active = true;
     }
 
+    block ()
+    {
+        this.blocking = true;
+    }
+
     knockback (enemy)
     {
         // player moving up
@@ -345,7 +392,7 @@ class Player extends Rectangle
     isCollidingWith ()
     {
         // check collisions with walls in scene
-        sceneManager.scene().walls.forEach(wall =>
+        sceneManager.currentScene.walls.forEach(wall =>
         {
             //check top/bottom
             if (this.top() < wall.bottom() && this.bottom() > wall.top())
@@ -378,7 +425,7 @@ class Player extends Rectangle
         })
 
         // check collisions with enemies of scene
-        sceneManager.scene().enemies.forEach(enemy =>
+        sceneManager.currentScene.enemies.forEach(enemy =>
         {
             //check top/bottom
             if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
@@ -391,12 +438,13 @@ class Player extends Rectangle
                         // add gold
                         this.gold += 2;
                         // remove enemy
-                        sceneManager.scene().enemies.splice(sceneManager.scene().enemies.indexOf(enemy), 1);
+                        sceneManager.currentScene.enemies.splice(sceneManager.currentScene.enemies.indexOf(enemy), 1);
                     }
                     else
                     {
                         this.takeDamage(5);
                         this.knockback(enemy);
+                        console.log(player.health);
                     }
                     // // check if above enemy
                     // if (this.bottom() < enemy.bottom())
@@ -423,7 +471,8 @@ class Player extends Rectangle
             }
         })
 
-        sceneManager.scene().doors.forEach(door =>
+        // check for player entering doors
+        sceneManager.currentScene.doors.forEach(door =>
         {
             //check top/bottom
             if (this.top() < door.bottom() && this.bottom() > door.top())
@@ -455,13 +504,28 @@ class Player extends Rectangle
                             this.x = door.left() - this.width;
                         }
                     }
+                    // door is unlocked
                     else
                     {
-                        // load next scene
-                        sceneManager.changeScene();
-                        // place player at front of door
-                        player.x = 50;
-                        player.y = 230;
+                        // check if entering left or right doors
+                        // left doors
+                        if (sceneManager.currentScene.prevDoors.includes(door))
+                        {
+                            // load previous scene
+                            sceneManager.lastScene();
+                            // place player at front of right doors
+                            player.x = 415;
+                            player.y = 235;
+                        }
+                        // right doors
+                        else if (sceneManager.currentScene.nextDoors.includes(door))
+                        {
+                            // load next scene
+                            sceneManager.nextScene();
+                            // place player at front of left doors
+                            player.x = 55;
+                            player.y = 235;
+                        }
                     }
                 }
             }   
@@ -512,7 +576,7 @@ class Weapon extends Rectangle
         }
 
         // check for collisions with enemies
-        sceneManager.scene().enemies.forEach(enemy =>
+        sceneManager.currentScene.enemies.forEach(enemy =>
         {
             // check if hitbox is active
             if (this.active)
@@ -525,6 +589,67 @@ class Weapon extends Rectangle
                     {
                         enemy.takeDamage(this.damage);
                         this.active = false;
+                    }
+                }
+            }
+        })
+    }
+}
+
+class Shield extends Rectangle
+{
+    constructor(blockPower)
+    {
+        super(player.x + player.width, player.y + player.height / 4, 30, 15, 'brown');
+        this.blockPower = blockPower;
+    }
+
+    render ()
+    {
+        super.render();
+
+        if (player.movingUp)
+        {
+            this.x = player.x;
+            this.y = player.top() - 15;
+            this.height = 15;
+            this.width = 30;
+        }
+        else if (player.movingDown)
+        {
+            this.x = player.x;
+            this.y = player.bottom();
+            this.height = 15;
+            this.width = 30;
+        }
+        else if (player.movingLeft)
+        {
+            this.x = player.left() - 15;
+            this.y = player.y;
+            this.height = 30;
+            this.width = 15;
+        }
+        else if (player.movingRight)
+        {
+            this.x = player.right();
+            this.y = player.y;
+            this.height = 30;
+            this.width = 15;
+        }
+
+        // check for collisions with enemies
+        sceneManager.currentScene.enemies.forEach(enemy =>
+        {
+            // check if hitbox is active
+            if (this.active)
+            {
+                //check top/bottom
+                if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+                {
+                    // check left/right
+                    if (this.left() < enemy.right() && this.right() > enemy.left())
+                    {
+                        enemy.knockback(20);
                     }
                 }
             }
@@ -601,7 +726,7 @@ class Enemy extends Rectangle
         {
             this.health -= damage;
 
-            this.knockback();
+            this.knockback(50);
             
             if (this.health <= 0)
             {
@@ -610,12 +735,12 @@ class Enemy extends Rectangle
         }
     }
 
-    knockback ()
+    knockback (force)
     {
         // player moving up
         if (player.movingUp)
         {
-            this.y -= 50;
+            this.y -= force;
 
             if (this.y < 50)
             {
@@ -625,7 +750,7 @@ class Enemy extends Rectangle
         // player moving down
         else if (player.movingDown)
         {
-            this.y += 50;
+            this.y += force;
 
             if (this.y > canvas.height - 50)
             {
@@ -635,7 +760,7 @@ class Enemy extends Rectangle
         // player moving left
         else if (player.movingLeft)
         {
-            this.x -= 50;
+            this.x -= force;
 
             if (this.x < 50)
             {
@@ -645,7 +770,7 @@ class Enemy extends Rectangle
         // player moving right
         else if (player.movingRight)
         {
-            this.x += 50;
+            this.x += force;
 
             if (this.x > canvas.width - 50)
             {
@@ -879,7 +1004,7 @@ class Enemy extends Rectangle
         }
                 
         // check collisions with walls in scene
-        sceneManager.scene().walls.forEach(wall =>
+        sceneManager.currentScene.walls.forEach(wall =>
             {
                 //check top/bottom
                 if (this.top() < wall.bottom() && this.bottom() > wall.top())
@@ -919,7 +1044,7 @@ class Enemy extends Rectangle
                 }
             })
         // check collisions with doors in scene
-        sceneManager.scene().doors.forEach(door =>
+        sceneManager.currentScene.doors.forEach(door =>
             {
                 //check top/bottom
                 if (this.top() < door.bottom() && this.bottom() > door.top())
@@ -1014,7 +1139,7 @@ class Door extends Rectangle
     {
         super.render();
         // check for empty room
-        if (sceneManager.scene().enemies.length > 0)
+        if (sceneManager.currentScene.enemies.length > 0)
         {
             // enemies or gold remaining - lock doors
             this.locked();
@@ -1091,6 +1216,7 @@ document.addEventListener('keydown', (event) =>
     }
 });
 
+// player attack
 document.addEventListener('click', () =>
 {
     if (!player.attacking)
@@ -1099,6 +1225,16 @@ document.addEventListener('click', () =>
     }
 })
 
+// player block
+document,addEventListener('auxclick', (event) =>
+{
+    event.preventDefault();
+
+    if (!player.attacking && !player.blocking)
+    {
+        player.block();
+    }
+})
 
 /***** Scenes  *****/
 
@@ -1108,25 +1244,33 @@ let scenes = [];
 // create scene
 const scene0 = new Scene('scene0');
 // populate scene
-scene0.makeScene([[2,2], [7,2], [2,7], [7,7]], [
-    new Enemy(300, 300, 'up'),
-    // new Enemy(100, 350),
-    // new Enemy(360, 70)
-])
+scene0.makeScene([], [], true)
 // add scene to scene list
 scenes.push(scene0);
 
+// create scene
 const scene1 = new Scene('scene1');
-scene1.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
-    new Enemy(300, 250, 'down')
-])
+// populate scene
+scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
+    // new Enemy(300, 300, 'up'),
+    // new Enemy(100, 350),
+    // new Enemy(360, 70)
+], false)
+// add scene to scene list
 scenes.push(scene1);
+
+const scene2 = new Scene('scene2');
+scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
+    new Enemy(300, 250, 'down')
+], false)
+scenes.push(scene2);
 
 /***** Setup *****/
 
 // create player
-const player = new Player(50, 230, 30, 30, 'blue');
+const player = new Player(235, 235, 30, 30, 'blue');
 player.weapon = new Weapon(5);
+player.shield = new Shield(50);
 
 // scene manager
 const sceneManager = new SceneManager(scenes);
