@@ -16,6 +16,7 @@ const ENEMY_SPEED = 1;
 const ENEMY_WALK_RANGE = 400;
 const ENEMY_SIGHT_RANGE = 150;
 const ENEMY_ATTACK_RANGE = 5;
+const ENEMY_RADIUS = 40;
 
 
 /***** Classes *****/
@@ -93,6 +94,7 @@ class Scene
         this.enemies = [];
         this.prevDoors = [];
         this.nextDoors = [];
+        this.navMesh = [];
     }
 
     makeScene (pillars, enemies, start)
@@ -116,7 +118,7 @@ class Scene
             walls.push(new Wall(i * 50, 0));
         }
         // bottom
-        for (let i = 0; i <= 10; i++)
+        for (let i = 0; i <= 9; i++)
         {
             walls.push(new Wall(i * 50, canvas.height - 50));
         }
@@ -229,7 +231,6 @@ class Rectangle
         context.fillStyle = this.color;
         // rectangle position and size
         context.fillRect(this.x, this.y, this.width, this.height);
-        // context.strokeRect
     }
 
     left ()
@@ -447,27 +448,6 @@ class Player extends Rectangle
                         this.knockback(enemy);
                         console.log(player.health);
                     }
-                    // // check if above enemy
-                    // if (this.bottom() < enemy.bottom())
-                    // {
-                    //     this.y = enemy.top() - this.height - ENEMY_SPEED;
-                    // }
-                    // // check if below enemy
-                    // else if (this.top() > enemy.top())
-                    // {
-                    //     this.y = enemy.bottom() + ENEMY_SPEED;
-                    // }
-                    // // check if to left of enemy
-                    // else if (this.right() < enemy.right())
-                    // {
-                    //     this.x = enemy.left() - this.width - ENEMY_SPEED;
-                    //     console.log('on left side')
-                    // }
-                    // // check if to right of enemy
-                    // else if (this.left() > enemy.left())
-                    // {
-                    //     this.y = enemy.right() + ENEMY_SPEED;
-                    // }
                 }
             }
         })
@@ -651,7 +631,11 @@ class Shield extends Rectangle
                     // check left/right
                     if (this.left() < enemy.right() && this.right() > enemy.left())
                     {
-                        enemy.knockback(30);
+                        // check if enemy is alive
+                        if (enemy.alive)
+                        {
+                            enemy.knockback(30);
+                        }
                     }
                 }
             }
@@ -684,7 +668,6 @@ class Enemy extends Rectangle
         this.health = 10;
         this.weapon;
         this.attacking = false;
-        this.damaged = false;
 
         // initialize starting direction
         switch (dir)
@@ -871,16 +854,6 @@ class Enemy extends Rectangle
         // check if enemy is alive
         if (this.alive)
         {
-            // check if being damaged
-            if (this.damaged)
-            {
-                this.color = 'orange';
-            }
-            else
-            {
-                this.color = 'red';
-            }
-
             //check if player is outside of sight range
             if (this.distanceToPlayer() > ENEMY_SIGHT_RANGE)
             {
@@ -1007,80 +980,141 @@ class Enemy extends Rectangle
                 
         // check collisions with walls in scene
         sceneManager.currentScene.walls.forEach(wall =>
+        {
+            //check top/bottom
+            if (this.top() < wall.bottom() && this.bottom() > wall.top())
             {
-                //check top/bottom
-                if (this.top() < wall.bottom() && this.bottom() > wall.top())
+                // check left/right
+                if (this.left() < wall.right() && this.right() > wall.left())
                 {
-                    // check left/right
-                    if (this.left() < wall.right() && this.right() > wall.left())
+                    // enemy moving up
+                    if (this.movingUp && this.bottom() > wall.bottom())
                     {
-                        // enemy moving up
-                        if (this.movingUp && this.bottom() > wall.bottom())
-                        {
-                            this.y = wall.bottom() + 5;
-                            this.newDirection();
-                        }
-                        // enemy moving down
-                        else if (this.movingDown && this.top() < wall.top())
-                        {
-                            this.y = wall.top() - this.height - 5;
-                            this.newDirection();
-                        }
-                        // enemy moving left
-                        else if (this.movingLeft && this.right() > wall.right())
-                        {
-                            this.x = wall.right() + 5;
-                            this.newDirection();
-                        }
-                        // enemy moving right
-                        else if (this.movingRight && this.left() < wall.left())
-                        {
-                            this.x = wall.left() - this.width - 5;
-                            this.newDirection();
-                        }
-
-                        this.x = this.prevX;
-                        this.y = this.prevY;
+                        this.y = wall.bottom() + 5;
+                        this.newDirection();
+                    }
+                    // enemy moving down
+                    else if (this.movingDown && this.top() < wall.top())
+                    {
+                        this.y = wall.top() - this.height - 5;
+                        this.newDirection();
+                    }
+                    // enemy moving left
+                    else if (this.movingLeft && this.right() > wall.right())
+                    {
+                        this.x = wall.right() + 5;
+                        this.newDirection();
+                    }
+                    // enemy moving right
+                    else if (this.movingRight && this.left() < wall.left())
+                    {
+                        this.x = wall.left() - this.width - 5;
+                        this.newDirection();
                     }
 
+                    // freeze enemy on axis to prevent clipping through walls on chase
+                    // enemy moving up
+                    if (this.movingUp)
+                    {
+                        this.y = this.prevY;
+                        this.newDirection();
+                    }
+                    // enemy moving down
+                    else if (this.movingDown)
+                    {
+                        this.y = this.prevY;
+                        this.newDirection();
+                    }
+                    // enemy moving left
+                    else if (this.movingLeft)
+                    {
+                        this.x = this.prevX;
+                        this.newDirection();
+                    }
+                    // enemy moving right
+                    else if (this.movingRight)
+                    {
+                        this.x = this.prevX;
+                        this.newDirection();
+                    }                    
                 }
-            })
+
+            }
+        })
+        // check collisions with other enemies in scene
+        sceneManager.currentScene.enemies.forEach(enemy =>
+        {
+            //check top/bottom
+            if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+            {
+                // check left/right
+                if (this.left() < enemy.right() && this.right() > enemy.left())
+                {
+                    // enemy moving up
+                    if (this.movingUp && this.bottom() > enemy.bottom())
+                    {
+                        this.y = enemy.bottom() + 5;
+                        this.newDirection();
+                    }
+                    // enemy moving down
+                    else if (this.movingDown && this.top() < enemy.top())
+                    {
+                        this.y = enemy.top() - this.height - 5;
+                        this.newDirection();
+                    }
+                    // enemy moving left
+                    else if (this.movingLeft && this.right() > enemy.right())
+                    {
+                        this.x = enemy.right() + 5;
+                        this.newDirection();
+                    }
+                    // enemy moving right
+                    else if (this.movingRight && this.left() < enemy.left())
+                    {
+                        this.x = enemy.left() - this.width - 5;
+                        this.newDirection();
+                    }
+                }
+
+            }
+        })
         // check collisions with doors in scene
         sceneManager.currentScene.doors.forEach(door =>
+        {
+            //check top/bottom
+            if (this.top() < door.bottom() && this.bottom() > door.top())
             {
-                //check top/bottom
-                if (this.top() < door.bottom() && this.bottom() > door.top())
+                // check left/right
+                if (this.left() < door.right() && this.right() > door.left())
                 {
-                    // check left/right
-                    if (this.left() < door.right() && this.right() > door.left())
+                    // enemy moving up
+                    if (this.movingUp && this.bottom() > door.bottom())
                     {
-                        // enemy moving up
-                        if (this.movingUp && this.bottom() > door.bottom())
-                        {
-                            this.y = door.bottom() + 5;
-                            this.newDirection();
-                        }
-                        // enemy moving down
-                        else if (this.movingDown && this.top() < door.top())
-                        {
-                            this.y = door.top() - this.height - 5;
-                            this.newDirection();
-                        }
-                        // enemy moving left
-                        else if (this.movingLeft && this.right() > door.right())
-                        {
-                            this.x = door.right() + 5;
-                            this.newDirection();
-                        }
-                        // enemy moving right
-                        else if (this.movingRight && this.left() < door.left())
-                        {
-                            this.x = door.left() - this.width - 5;
-                            this.newDirection();
-                        }
+                        this.y = door.bottom() + 5;
+                        this.newDirection();
+                    }
+                    // enemy moving down
+                    else if (this.movingDown && this.top() < door.top())
+                    {
+                        this.y = door.top() - this.height - 5;
+                        this.newDirection();
+                    }
+                    // enemy moving left
+                    else if (this.movingLeft && this.right() > door.right())
+                    {
+                        this.x = door.right() + 5;
+                        this.newDirection();
+                    }
+                    // enemy moving right
+                    else if (this.movingRight && this.left() < door.left())
+                    {
+                        this.x = door.left() - this.width - 5;
+                        this.newDirection();
                     }
                 }
-            })
+            }
+        })
+        
     }
 }
 
@@ -1263,9 +1297,13 @@ scenes.push(scene1);
 
 const scene2 = new Scene('scene2');
 scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
-    new Enemy(300, 250, 'down')
+    new Enemy(250, 400, 'down'),
+    new Enemy (300, 250, 'left'),
+    new Enemy (250, 100, 'left'),
 ], false)
 scenes.push(scene2);
+
+
 
 /***** Setup *****/
 
@@ -1286,6 +1324,7 @@ const animate = () =>
     // clear canvas
     context.clearRect(0, 0, canvas.width, canvas.height);
     // render scene
+    // sceneManager.loadScene(scene2);
     sceneManager.loadScene(currentScene);
     // render player
     player.render();
