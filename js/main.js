@@ -12,10 +12,10 @@ const context = canvas.getContext('2d');
 
 /***** Constants *****/
 const PLAYER_SPEED = 10;
-const ENEMY_SPEED = 0.7;
+const ENEMY_SPEED = 0.6;
 const ENEMY_WALK_RANGE = 400;
 const ENEMY_SIGHT_RANGE = 150;
-const ENEMY_ATTACK_RANGE = 50;
+const ENEMY_ATTACK_RANGE = 5;
 
 
 /***** Classes *****/
@@ -42,9 +42,19 @@ class SceneManager
     {
         this.currentScene = scene;
         scene.floors.forEach(floor => floor.render());
+        scene.floors.forEach(floor => context.strokeRect(floor.x, floor.y, floor.width, floor.height));
         scene.doors.forEach(door => door.render());
         scene.walls.forEach(wall => wall.render());
         scene.enemies.forEach(enemy => enemy.render());
+
+        if (player.attacking)
+        {
+            player.weapon.render();
+            setTimeout(function()
+            {
+                player.attacking = false;
+            }, 300)
+        }
     }
 }
 class Scene
@@ -209,10 +219,13 @@ class Player extends Rectangle
     {
         super(x, y, 30, 30, 'blue');
         this.gold = 0;
+        this.health = 100;
         this.movingUp = false;
         this.movingDown = false;
         this.movingLeft = false;
         this.movingRight = false;
+        this.weapon;
+        this.attacking = false;
     }
 
     type ()
@@ -264,6 +277,71 @@ class Player extends Rectangle
         return [this.x, this.y];
     }
 
+    takeDamage (damage)
+    {
+        this.health -= damage;
+
+        if (this.health <= 0)
+        {
+            this.die();
+        }
+    }
+
+    die ()
+    {
+        // game over
+    }
+
+    attack ()
+    {
+        this.attacking = true;
+        this.weapon.active = true;
+    }
+
+    knockback (enemy)
+    {
+        // player moving up
+        if (enemy.movingUp)
+        {
+            this.y -= 50;
+
+            if (this.y < 50)
+            {
+                this.y = 50;
+            }
+        }
+        // player moving down
+        else if (enemy.movingDown)
+        {
+            this.y += 50;
+
+            if (this.y > canvas.height - 50)
+            {
+                this.y = canvas.height - 50;;
+            }
+        }
+        // player moving left
+        else if (enemy.movingLeft)
+        {
+            this.x -= 50;
+
+            if (this.x < 50)
+            {
+                this.x = 50;
+            }
+        }
+        // player moving right
+        else if (enemy.movingRight)
+        {
+            this.x += 50;
+
+            if (this.x > canvas.width - 50)
+            {
+                this.x = canvas.width - 50;;
+            }
+        }
+    }
+
     isCollidingWith ()
     {
         // check collisions with walls in scene
@@ -308,16 +386,28 @@ class Player extends Rectangle
                 // check left/right
                 if (this.left() < enemy.right() && this.right() > enemy.left())
                 {
-                    // check if above enemy
-                    if (this.bottom() < enemy.bottom())
+                    if (!enemy.alive)
                     {
-                        this.y = enemy.top() - this.height - ENEMY_SPEED;
+                        // add gold
+                        this.gold += 2;
+                        // remove enemy
+                        sceneManager.scene().enemies.splice(sceneManager.scene().enemies.indexOf(enemy), 1);
                     }
-                    // check if below enemy
-                    else if (this.top() > enemy.top())
+                    else
                     {
-                        this.y = enemy.bottom() + ENEMY_SPEED;
+                        this.takeDamage(5);
+                        this.knockback(enemy);
                     }
+                    // // check if above enemy
+                    // if (this.bottom() < enemy.bottom())
+                    // {
+                    //     this.y = enemy.top() - this.height - ENEMY_SPEED;
+                    // }
+                    // // check if below enemy
+                    // else if (this.top() > enemy.top())
+                    // {
+                    //     this.y = enemy.bottom() + ENEMY_SPEED;
+                    // }
                     // // check if to left of enemy
                     // else if (this.right() < enemy.right())
                     // {
@@ -379,6 +469,69 @@ class Player extends Rectangle
     }
 }
 
+class Weapon extends Rectangle
+{
+    constructor (damage)
+    {
+        super(player.x + player.width, player.y + player.height / 4, 30, 15, 'gray');
+        this.damage = damage;
+        this.active = false;
+    }
+
+    render ()
+    {
+        super.render();
+
+        if (player.movingUp)
+        {
+            this.x = player.x + player.width / 4;
+            this.y = player.top() - 30;
+            this.height = 30;
+            this.width = 15;
+        }
+        else if (player.movingDown)
+        {
+            this.x = player.x + player.width / 4;
+            this.y = player.bottom();
+            this.height = 30;
+            this.width = 15;
+        }
+        else if (player.movingLeft)
+        {
+            this.x = player.left() - 30;
+            this.y = player.y + player.height / 4;
+            this.height = 15;
+            this.width = 30;
+        }
+        else if (player.movingRight)
+        {
+            this.x = player.right();
+            this.y = player.y + player.height / 4;
+            this.height = 15;
+            this.width = 30;
+        }
+
+        // check for collisions with enemies
+        sceneManager.scene().enemies.forEach(enemy =>
+        {
+            // check if hitbox is active
+            if (this.active)
+            {
+                //check top/bottom
+                if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+                {
+                    // check left/right
+                    if (this.left() < enemy.right() && this.right() > enemy.left())
+                    {
+                        enemy.takeDamage(this.damage);
+                        this.active = false;
+                    }
+                }
+            }
+        })
+    }
+}
+
 class Enemy extends Rectangle
 {
     constructor (x, y, dir)
@@ -386,6 +539,8 @@ class Enemy extends Rectangle
         super(x, y, 40, 40, 'red');
         this.alive = true;
         this.startPos = [this.x, this.y];
+        this.prevX = this.x;
+        this.prevY = this.y;
         this.movingUp = false;
         this.movingRight = false;
         this.movingLeft = false;
@@ -399,6 +554,10 @@ class Enemy extends Rectangle
         this.destination;
         this.destinationReached = false;
         this.destinationSet = false;
+        this.health = 10;
+        this.weapon;
+        this.attacking = false;
+        this.damaged = false;
 
         // initialize starting direction
         switch (dir)
@@ -434,6 +593,75 @@ class Enemy extends Rectangle
     position ()
     {
         return [this.x, this.y];
+    }
+
+    takeDamage (damage)
+    {
+        if (this.alive)
+        {
+            this.health -= damage;
+
+            this.knockback();
+            
+            if (this.health <= 0)
+            {
+                this.die();
+            }
+        }
+    }
+
+    knockback ()
+    {
+        // player moving up
+        if (player.movingUp)
+        {
+            this.y -= 50;
+
+            if (this.y < 50)
+            {
+                this.y = 50;
+            }
+        }
+        // player moving down
+        else if (player.movingDown)
+        {
+            this.y += 50;
+
+            if (this.y > canvas.height - 50)
+            {
+                this.y = canvas.height - 50;;
+            }
+        }
+        // player moving left
+        else if (player.movingLeft)
+        {
+            this.x -= 50;
+
+            if (this.x < 50)
+            {
+                this.x = 50;
+            }
+        }
+        // player moving right
+        else if (player.movingRight)
+        {
+            this.x += 50;
+
+            if (this.x > canvas.width - 50)
+            {
+                this.x = canvas.width - 50;;
+            }
+        }
+    }
+
+    die ()
+    {
+        this.alive = false;
+        this.color = 'yellow';
+        this.x = this.x + this.width / 4;
+        this.y = this.y + this.height / 4;
+        this.width /= 2;
+        this.height /= 2;
     }
 
     getDirection ()
@@ -516,6 +744,16 @@ class Enemy extends Rectangle
         // check if enemy is alive
         if (this.alive)
         {
+            // check if being damaged
+            if (this.damaged)
+            {
+                this.color = 'orange';
+            }
+            else
+            {
+                this.color = 'red';
+            }
+
             //check if player is outside of sight range
             if (this.distanceToPlayer() > ENEMY_SIGHT_RANGE)
             {
@@ -541,6 +779,10 @@ class Enemy extends Rectangle
                 // patrolling
                 case this.moveStates.patrol:
                     {
+                        // get prev position
+                        this.prevX = this.x;
+                        this.prevY = this.y;
+
                         // move enemy back and forth
                         // move up
                         if (this.movingUp)
@@ -579,64 +821,63 @@ class Enemy extends Rectangle
                         }
                         // move left
                         else if (this.movingLeft)
-                        {
-                            if (this.position()[0] > this.startPos[0] - ENEMY_WALK_RANGE)
-                            {
-                                this.x -= ENEMY_SPEED;
-                            }
-                            else
-                            {
-                                this.newDirection();
-                            }
-                            
-                            if (Math.floor(Math.random() * 300) === 0)
-                            {   
-                                this.newDirection();
-                            }
-                        }
-                        // move right
-                        else if (this.movingRight)
-                        {
-                            if (this.position()[0] > this.startPos[0] + ENEMY_WALK_RANGE)
-                            {
-                                this.x += ENEMY_SPEED;
-                            }
-                            else
-                            {
-                                this.newDirection();
-                            }
-                            
-                            if (Math.floor(Math.random() * 300) === 0)
-                            {   
-                                this.newDirection();
-                            }
-                        }
-
-                        break;
-                    }
-                // chasing
-                case this.moveStates.chase:
                     {
-                        // move towards player
-                        this.x -= (this.x - player.x) / this.distanceToPoint(player.position());
-                        this.y -= (this.y - player.y) / this.distanceToPoint(player.position());
-
-                        break;
+                        if (this.position()[0] > this.startPos[0] - ENEMY_WALK_RANGE)
+                        {
+                            this.x -= ENEMY_SPEED;
+                        }
+                        else
+                        {
+                            this.newDirection();
+                        }
+                        
+                        if (Math.floor(Math.random() * 300) === 0)
+                        {   
+                            this.newDirection();
+                        }
                     }
-                // attacking
-                case this.moveStates.attack:
+                    // move right
+                    else if (this.movingRight)
                     {
-                        // stop moving
-                        this.x = this.x;
-                        this.y = this.y;
-
-                        // attack
-                        // setTimeout(attack, 500);
-                        break;
+                        if (this.position()[0] > this.startPos[0] + ENEMY_WALK_RANGE)
+                        {
+                            this.x += ENEMY_SPEED;
+                        }
+                        else
+                        {
+                            this.newDirection();
+                        }
+                        
+                        if (Math.floor(Math.random() * 300) === 0)
+                        {   
+                            this.newDirection();
+                        }
                     }
+                    
+                    break;
+                }
+            // chasing
+            case this.moveStates.chase:
+                {
+                    // save previous position
+                    this.prevX = this.x;
+                    this.prevY = this.y;
+                    // move towards player
+                    this.x -= (this.x - player.x) / this.distanceToPlayer();
+                    this.y -= (this.y - player.y) / this.distanceToPlayer();
+                    
+                    break;
+                }
+            // attacking
+            case this.moveStates.attack:
+                {
+                    this.x = this.x;
+                    this.y = this.y;
+                    break;
+                }
             }
         }
-        
+                
         // check collisions with walls in scene
         sceneManager.scene().walls.forEach(wall =>
             {
@@ -670,7 +911,11 @@ class Enemy extends Rectangle
                             this.x = wall.left() - this.width - 5;
                             this.newDirection();
                         }
+
+                        this.x = this.prevX;
+                        this.y = this.prevY;
                     }
+
                 }
             })
         // check collisions with doors in scene
@@ -846,6 +1091,14 @@ document.addEventListener('keydown', (event) =>
     }
 });
 
+document.addEventListener('click', () =>
+{
+    if (!player.attacking)
+    {
+        player.attack();
+    }
+})
+
 
 /***** Scenes  *****/
 
@@ -856,7 +1109,7 @@ let scenes = [];
 const scene0 = new Scene('scene0');
 // populate scene
 scene0.makeScene([[2,2], [7,2], [2,7], [7,7]], [
-    // new Enemy(300, 300, 'up'),
+    new Enemy(300, 300, 'up'),
     // new Enemy(100, 350),
     // new Enemy(360, 70)
 ])
@@ -873,6 +1126,7 @@ scenes.push(scene1);
 
 // create player
 const player = new Player(50, 230, 30, 30, 'blue');
+player.weapon = new Weapon(5);
 
 // scene manager
 const sceneManager = new SceneManager(scenes);
@@ -901,12 +1155,3 @@ animate();
 
 
 /***** Functions *****/
-
-function makeScenes ()
-{
-    // scenes array
-    const scenes = [];
-
-    // fill scene with walls, floors, doors, and enemies
-    
-}
