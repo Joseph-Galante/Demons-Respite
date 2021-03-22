@@ -12,7 +12,7 @@ const context = canvas.getContext('2d');
 
 /***** Constants *****/
 const PLAYER_SPEED = 10;
-const ENEMY_SPEED = 0.6;
+const ENEMY_SPEED = 1;
 const ENEMY_WALK_RANGE = 400;
 const ENEMY_SIGHT_RANGE = 150;
 const ENEMY_ATTACK_RANGE = 5;
@@ -78,7 +78,7 @@ class SceneManager
             setTimeout(function()
             {
                 player.blocking = false;
-            }, 500)
+            }, 600)
         }
     }
 }
@@ -343,6 +343,7 @@ class Player extends Rectangle
     block ()
     {
         this.blocking = true;
+        this.shield.active = true;
     }
 
     knockback (enemy)
@@ -602,6 +603,7 @@ class Shield extends Rectangle
     {
         super(player.x + player.width, player.y + player.height / 4, 30, 15, 'brown');
         this.blockPower = blockPower;
+        this.active = false;
     }
 
     render ()
@@ -649,7 +651,7 @@ class Shield extends Rectangle
                     // check left/right
                     if (this.left() < enemy.right() && this.right() > enemy.left())
                     {
-                        enemy.knockback(20);
+                        enemy.knockback(30);
                     }
                 }
             }
@@ -1252,9 +1254,9 @@ scenes.push(scene0);
 const scene1 = new Scene('scene1');
 // populate scene
 scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
-    // new Enemy(300, 300, 'up'),
-    // new Enemy(100, 350),
-    // new Enemy(360, 70)
+    new Enemy(400, 240, 'left'),
+    new Enemy(230, 350, 'right'),
+    new Enemy(230, 150, 'up')
 ], false)
 // add scene to scene list
 scenes.push(scene1);
