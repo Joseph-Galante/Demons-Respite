@@ -23,6 +23,8 @@ const ENEMY_RADIUS = 40;
 const playerHealth = document.querySelector('.health');
 const playerGold = document.querySelector('.gold');
 const bossHealth = document.querySelector('.bossHealth');
+const container = document.querySelector('.container');
+const winScreen = document.querySelector('.winScreen');
 
 /***** Classes *****/
 class SceneManager
@@ -59,6 +61,12 @@ class SceneManager
         this.currentScene = scene;
         // scene changed successfully
         this.changingScenes = false;
+
+        // win scene
+        if (scene.name === 'win')
+        {
+            scene.winScene();
+        }
 
         // render scene
         scene.floors.forEach(floor => floor.render());
@@ -110,6 +118,12 @@ class Scene
         this.boss = [];
         this.prevDoors = [];
         this.nextDoors = [];
+    }
+
+    winScene ()
+    {
+        container.classList.add('hidden');
+        winScreen.classList.remove('hidden');
     }
 
     makeScene (pillars, enemies, start, boss)
@@ -1542,7 +1556,7 @@ const animate = () =>
     // clear canvas
     context.clearRect(0, 0, canvas.width, canvas.height);
     // render scene
-    sceneManager.loadScene(scene5);
+    sceneManager.loadScene(currentScene);
     // render player
     player.render();
     // check for collisions
