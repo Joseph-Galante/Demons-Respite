@@ -55,7 +55,7 @@ button:hover {
 
 .gameplay {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
 }
 
@@ -70,15 +70,50 @@ canvas {
     justify-content: space-around;
 }
 
+.health {
+    margin: 0 200px 0 0;
+}
+
 .bossHealth {
     display: flex;
     justify-content: center;
 }
 
-.hidden {
-    display: none;
+.gameMenu {
+    background-color: black;
+    height: 250px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    top: 150px;
+    left: 210px;
+}
+
+.gameMenuControlsButton, .gameMenuReturn {
+    margin: 40px;
+}
+
+.gameMenuControls {
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    left: 100px;
+}
+
+.gameMenuControlsReturn {
+    position: absolute;
+    top: 30px;
+    left: 60px;
 }
 
 .summary {
     padding: 10px;
+}
+
+.hidden {
+    display: none;
 }

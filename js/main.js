@@ -10,6 +10,11 @@ canvas.setAttribute('width', getComputedStyle(canvas).width);
 const context = canvas.getContext('2d');
 
 
+/***** Variables *****/
+let gamePaused = false;
+let gameRunning = false;
+
+
 /***** Constants *****/
 const PLAYER_SPEED = 10;
 const ENEMY_SPEED = 1;
@@ -33,6 +38,11 @@ const controls = document.querySelector('.controls');
 const returnButton = document.querySelector('.return');
 const winReturnButton = document.querySelector('.winReturn');
 const loseReturnButton = document.querySelector('.loseReturn');
+const gameMenu = document.querySelector('.gameMenu');
+const gameMenuControlsButton = document.querySelector('.gameMenuControlsButton');
+const gameMenuControlsReturn = document.querySelector('.gameMenuControlsReturn');
+const gameMenuReturn = document.querySelector('.gameMenuReturn');
+const gameMenuControls = document.querySelector('.gameMenuControls');
 
 /***** Classes *****/
 class SceneManager
@@ -100,68 +110,82 @@ class SceneManager
             this.playGame();
         }
 
-        // render scene
-        scene.floors.forEach(floor => floor.render());
-        scene.floors.forEach(floor => context.strokeRect(floor.x, floor.y, floor.width, floor.height));
-        scene.doors.forEach(door => door.render());
-        scene.walls.forEach(wall => wall.render());
-        scene.enemies.forEach(enemy => enemy.render());
-        scene.boss.forEach(boss => boss.render());
-
-        // render weapon if player is attacking
-        if (player.attacking)
+        if (!gamePaused)
         {
-            player.weapon.render();
-            setTimeout(function()
+            // render scene
+            scene.floors.forEach(floor => floor.render());
+            scene.floors.forEach(floor => context.strokeRect(floor.x, floor.y, floor.width, floor.height));
+            scene.doors.forEach(door => door.render());
+            scene.walls.forEach(wall => wall.render());
+            scene.enemies.forEach(enemy => enemy.render());
+            scene.boss.forEach(boss => boss.render());
+            
+            // render weapon if player is attacking
+            if (player.attacking)
             {
-                player.attacking = false;
-            }, 300)
-        }
-
-        // render shield if player is blocking
-        if (player.blocking)
-        {
-            player.shield.render();
-            setTimeout(function()
+                player.weapon.render();
+                setTimeout(function()
+                {
+                    player.attacking = false;
+                }, 300)
+            }
+            
+            // render shield if player is blocking
+            if (player.blocking)
             {
-                player.blocking = false;
-            }, 600)
-        }
-
-        // UI
-        playerHealth.textContent = `Health: ${player.health}`;
-        playerGold.textContent = `Gold: ${player.gold}`;
-        // if in boss fight
-        if (this.currentScene.boss.length > 0)
-        {
-            bossHealth.textContent = `Demon HP: ${boss.health}`;
+                player.shield.render();
+                setTimeout(function()
+                {
+                    player.blocking = false;
+                }, 600)
+            }
+            
+            // UI
+            playerHealth.textContent = `Health: ${player.health}`;
+            playerGold.textContent = `Gold: ${player.gold}`;
+            // if in boss fight
+            if (this.currentScene.boss.length > 0)
+            {
+                bossHealth.textContent = `Demon HP: ${boss.health}`;
+            }
         }
     }
 
     // win screen
     winScene ()
     {
+        gamePaused = true;
+        gameRunning = false;
         gameplay.classList.add('hidden');
+        gameMenu.classList.add('hidden');
         winScreen.classList.remove('hidden');
     }
     // lose screen
     loseScene ()
     {
+        gamePaused = true;
+        gameRunning = false;
         gameplay.classList.add('hidden');
+        gameMenu.classList.add('hidden');
         loseScreen.classList.remove('hidden');
     }
     // main menu
     mainMenu ()
     {
+        gamePaused = true;
+        gameRunning = false;
         gameplay.classList.add('hidden');
         loseScreen.classList.add('hidden');
         winScreen.classList.add('hidden');
         controls.classList.add('hidden');
+        gameMenu.classList.add('hidden');
         mainMenu.classList.remove('hidden');
     }
     // game play
     playGame ()
     {
+        gamePaused = false;
+        gameRunning = true;
         loseScreen.classList.add('hidden');
         winScreen.classList.add('hidden');
         mainMenu.classList.add('hidden');
@@ -171,7 +195,9 @@ class SceneManager
     // controls screen
     controls ()
     {
+        gamePaused = true;
         mainMenu.classList.add('hidden');
+        gameMenu.classList.add('hidden');
         controls.classList.remove('hidden');
     }
 }
@@ -1469,7 +1495,7 @@ document.addEventListener('keydown', (event) =>
     {
         // change direction
         player.direction('up');
-
+        
         if (player.top() <= 0)
         {
             player.y = 0;
@@ -1477,9 +1503,9 @@ document.addEventListener('keydown', (event) =>
         else
         {
             player.y -= PLAYER_SPEED;
-        }  
+        }
     }
-    else if (event.key === 'd')
+    if (event.key === 'd')
     {
         // change direction
         player.direction('right');
@@ -1493,11 +1519,11 @@ document.addEventListener('keydown', (event) =>
             player.x += PLAYER_SPEED;
         }  
     }
-    else if (event.key === 'a')
+    if (event.key === 'a')
     {
         // change direction
         player.direction('left');
-
+        
         if (player.left() <= 0)
         {
             player.x = 0;
@@ -1507,11 +1533,11 @@ document.addEventListener('keydown', (event) =>
             player.x -= PLAYER_SPEED;
         }  
     }
-    else if (event.key === 's')
+    if (event.key === 's')
     {
         // change direction
         player.direction('down');
-
+        
         if (player.bottom() >= canvas.height)
         {
             player.y = canvas.height - player.height;
@@ -1521,12 +1547,30 @@ document.addEventListener('keydown', (event) =>
             player.y += PLAYER_SPEED;
         }  
     }
+    
+    if (event.key === 'Escape' && gameRunning)
+    {
+        // let tempScene;
+        
+        if (gameMenu.classList.contains('hidden') && gameMenuControls.classList.contains('hidden'))
+        {
+            // open game menu
+            gameMenu.classList.remove('hidden');
+            gamePaused = true;
+        }
+        else
+        {
+            // return to game
+            gameMenu.classList.add('hidden');
+            gamePaused = false;
+        }
+    }
 });
 
 // player attack
 document.addEventListener('click', () =>
 {
-    if (!player.attacking)
+    if (!player.attacking && !gamePaused)
     {
         player.attack();
     }
@@ -1537,7 +1581,7 @@ document,addEventListener('auxclick', (event) =>
 {
     event.preventDefault();
 
-    if (!player.attacking && !player.blocking)
+    if (!player.attacking && !player.blocking && !gamePaused)
     {
         player.block();
     }
@@ -1567,6 +1611,23 @@ winReturnButton.addEventListener('click', () =>
 })
 // return to main menu
 loseReturnButton.addEventListener('click', () =>
+{
+    currentScene = mainMenuScene;
+})
+// game menu controls
+gameMenuControlsButton.addEventListener('click', () =>
+{
+    gameMenuControls.classList.remove('hidden');
+    gameMenu.classList.add('hidden');
+})
+// game menu controls return - return to game menu
+gameMenuControlsReturn.addEventListener('click', () =>
+{
+    gameMenuControls.classList.add('hidden');
+    gameMenu.classList.remove('hidden');
+})
+// return to main menu from game menu
+gameMenuReturn.addEventListener('click', () =>
 {
     currentScene = mainMenuScene;
 })
@@ -1611,8 +1672,8 @@ scenes.push(scene3);
 
 const scene4 = new Scene('corner-pockets');
 scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6], [3, 7], [6, 6], [6, 7], [7, 6]], [
-    new Enemy(350, 200, 'left', false),
-    new Enemy(350, 300, 'left', false),
+    new Enemy(150, 230, 'right', false),
+    new Enemy(350, 230, 'left', false),
     new Enemy(240, 100, 'down', false),
     new Enemy(240, 400, 'up', false)
 ], false, false)

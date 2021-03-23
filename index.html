@@ -9,12 +9,6 @@
     <script src='./js/main.js' async defer></script>
 </head>
 <body>
-    <div class='playerUI'>
-        <div class='health'></div>
-        <div class='gold'></div>
-    </div>
-    <div class='bossHealth'></div>
-
     <div class='winScreen hidden'>
         <div class='winScreenBkgrnd'>
             <h1 id='win'>You Win</h1>
@@ -33,9 +27,9 @@
         <div id='mainMenuBkgrnd'>
             <h1 id='title'>Demon's Respite</h1>
             <h2 class='bar'>=======================================</h2>
-            <h3 class='summary'>A game of luck, skill, and determination, Demon's Respite will have you crawling through dungeons in search of better equipment and magical abilities. </h3>
+            <h3 class='summary'>A game of luck, skill, and determination, Demon's Respite will have you crawling through dungeons in search of the Demon, a dark creature who deals in reanimating the dead and preying on the weak. </h3>
             <h2 class='bar'>=======================================</h2>
-            <h3 class='summary'>Be wary though, each dungeon is home to plenty of bizarre creatures, all of whom have one goal: keep you from reaching the Demon's chambers. Gear up and defeat enemies as you attempt to reach the center of the dungeon to slay the land's eternal plague, the Demon. </h3>
+            <h3 class='summary'>Be wary, as each dungeon is home to plenty of bizarre creatures, all of whom have one goal: keep you from reaching the Demon's chambers. Sharpen your skills and defeat enemies as you attempt to reach the center of the dungeon to slay the land's eternal plague, the Demon. </h3>
 
             <button class='play-game'>Play Game</button>
             <button class='controlsBtn'>How to Play</button>
@@ -59,8 +53,36 @@
         </div>
     </div>
 
+    <div class='gameMenuControls hidden'>
+        <div class='top'>
+            <button class='gameMenuControlsReturn'>Return</button>
+            <h1>How to Play</h1>
+        </div>
+        <h2 class='bar'>=======================================</h2>
+        <div id='controlScheme'>
+            <h2 id='controlsTitle'>Controls:</h1>
+            <img src='./assets/images/control-scheme.PNG'>
+        </div>
+        <h2 class='bar'>=======================================</h2>
+        <div id='gamePlan'>
+            <h2 id='planTitle'>Game Plan:</h1>
+            <img src='./assets/images/game-plan.PNG'>
+        </div>
+    </div>
+
     <div class='gameplay hidden'>
+        <div class='playerUI'>
+            <div class='health'></div>
+            <div class='gold'></div>
+        </div>
+        <div class='bossHealth'></div>
+
         <canvas></canvas>
+    </div>
+
+    <div class='gameMenu hidden'>
+        <button class='gameMenuControlsButton'>How to Play</button>
+        <button class='gameMenuReturn'>Return to Main Menu</button>
     </div>
 </body>
 </html>
