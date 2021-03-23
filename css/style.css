@@ -1,4 +1,59 @@
-.container {
+#mainMenuBkgrnd {
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1, h2, h3 {
+    color: white;
+    text-align: center;
+}
+
+.bar {
+    color: white;
+}
+
+.play-game {
+    height: 60px;
+    width: 200px;
+    margin: 10px;
+}
+
+.controlsBtn {
+    height: 40px;
+    width: 150px;
+    margin: 20px;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+.return {
+    height: 30px;
+    width: 100px;
+    position: absolute;
+    left: 40px;
+}
+
+.controls {
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.top {
+    display: flex;
+    align-items: center;
+}
+
+#gamePlan {
+    margin: 20px;
+}
+
+.gameplay {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -22,4 +77,8 @@ canvas {
 
 .hidden {
     display: none;
+}
+
+.summary {
+    padding: 10px;
 }

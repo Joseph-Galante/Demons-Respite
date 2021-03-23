@@ -23,8 +23,16 @@ const ENEMY_RADIUS = 40;
 const playerHealth = document.querySelector('.health');
 const playerGold = document.querySelector('.gold');
 const bossHealth = document.querySelector('.bossHealth');
-const container = document.querySelector('.container');
+const gameplay = document.querySelector('.gameplay');
 const winScreen = document.querySelector('.winScreen');
+const loseScreen = document.querySelector('.loseScreen');
+const mainMenu = document.querySelector('.mainMenu');
+const playGame = document.querySelector('.play-game');
+const controlsButton = document.querySelector('.controlsBtn');
+const controls = document.querySelector('.controls');
+const returnButton = document.querySelector('.return');
+const winReturnButton = document.querySelector('.winReturn');
+const loseReturnButton = document.querySelector('.loseReturn');
 
 /***** Classes *****/
 class SceneManager
@@ -65,7 +73,31 @@ class SceneManager
         // win scene
         if (scene.name === 'win')
         {
-            scene.winScene();
+            this.winScene();
+        }
+
+        // lose scene
+        if (scene.name === 'lose')
+        {
+            this.loseScene();
+        }
+
+        // main menu
+        if (scene.name === 'mainMenu')
+        {
+            this.mainMenu();
+        }
+
+        // controls screen
+        if (scene.name === 'controls')
+        {
+            this.controls();
+        }
+
+        // playing
+        if (scene.name === 'start')
+        {
+            this.playGame();
         }
 
         // render scene
@@ -105,6 +137,43 @@ class SceneManager
             bossHealth.textContent = `Demon HP: ${boss.health}`;
         }
     }
+
+    // win screen
+    winScene ()
+    {
+        gameplay.classList.add('hidden');
+        winScreen.classList.remove('hidden');
+    }
+    // lose screen
+    loseScene ()
+    {
+        gameplay.classList.add('hidden');
+        loseScreen.classList.remove('hidden');
+    }
+    // main menu
+    mainMenu ()
+    {
+        gameplay.classList.add('hidden');
+        loseScreen.classList.add('hidden');
+        winScreen.classList.add('hidden');
+        controls.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+    }
+    // game play
+    playGame ()
+    {
+        loseScreen.classList.add('hidden');
+        winScreen.classList.add('hidden');
+        mainMenu.classList.add('hidden');
+        controls.classList.add('hidden');
+        gameplay.classList.remove('hidden');
+    }
+    // controls screen
+    controls ()
+    {
+        mainMenu.classList.add('hidden');
+        controls.classList.remove('hidden');
+    }
 }
 class Scene
 {
@@ -118,12 +187,6 @@ class Scene
         this.boss = [];
         this.prevDoors = [];
         this.nextDoors = [];
-    }
-
-    winScene ()
-    {
-        container.classList.add('hidden');
-        winScreen.classList.remove('hidden');
     }
 
     makeScene (pillars, enemies, start, boss)
@@ -1480,6 +1543,34 @@ document,addEventListener('auxclick', (event) =>
     }
 })
 
+// play game
+playGame.addEventListener('click', () =>
+{
+    currentScene = scene0;
+})
+
+// controls
+controlsButton.addEventListener('click', () =>
+{
+    currentScene = controlsScene;
+})
+
+// return to main menu
+returnButton.addEventListener('click', () =>
+{
+    currentScene = mainMenuScene;
+})
+// return to main menu
+winReturnButton.addEventListener('click', () =>
+{
+    currentScene = mainMenuScene;
+})
+// return to main menu
+loseReturnButton.addEventListener('click', () =>
+{
+    currentScene = mainMenuScene;
+})
+
 /***** Scenes  *****/
 
 // array of scenes
@@ -1527,15 +1618,26 @@ scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6]
 ], false, false)
 scenes.push(scene4);
 
+//shuffle scenes array
+
 // boss scene
 const scene5 = new Scene('boss');
 const boss = new Boss(325, 200);
 scene5.makeScene([[7, 2], [7, 7]], [boss], false, true);
 scenes.push(scene5);
 
-// win scene
-const scene6 = new Scene('win');
-scenes.push(scene6);
+// win screen
+const winScene = new Scene('win');
+scenes.push(winScene);
+
+// lose screen
+const loseScene = new Scene('lose');
+
+// main menu screen
+const mainMenuScene = new Scene('mainMenu');
+
+// controls screen
+const controlsScene = new Scene('controls');
 
 /***** Setup *****/
 
@@ -1547,8 +1649,8 @@ player.shield = new Shield(50);
 // scene manager
 const sceneManager = new SceneManager(scenes);
 
-// first scene
-let currentScene = scene0;
+// first scene - main menu
+let currentScene = mainMenuScene;
 
 /*===================== Game Loop ======================*/
 const animate = () =>
@@ -1568,6 +1670,3 @@ const animate = () =>
 
 // Start
 animate();
-
-
-/***** Functions *****/
