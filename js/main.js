@@ -24,6 +24,10 @@ const ENEMY_ATTACK_RANGE = 5;
 const ENEMY_RADIUS = 40;
 
 
+/***** DOM Images *****/
+const enemyModel = document.querySelector('#enemyModel');
+
+
 /***** DOM Elements *****/
 const playerHealth = document.querySelector('.health');
 const playerGold = document.querySelector('.gold');
@@ -43,6 +47,7 @@ const gameMenuControlsButton = document.querySelector('.gameMenuControlsButton')
 const gameMenuControlsReturn = document.querySelector('.gameMenuControlsReturn');
 const gameMenuReturn = document.querySelector('.gameMenuReturn');
 const gameMenuControls = document.querySelector('.gameMenuControls');
+
 
 /***** Classes *****/
 class SceneManager
@@ -352,6 +357,30 @@ class Scene
         {
             this.enemies = enemies;
         }
+    }
+}
+
+class Sound
+{
+    constructor (source)
+    {
+        this.audioElement = document.createElement('audio');
+        this.source = source;
+        this.audioElement.setAttribute("preload", "auto");
+        this.audioElement.setAttribute("controls", "none");
+        this.audioElement.style.display = "none";
+        document.body.appendChild(this.audioElement);
+    }
+
+    play ()
+    {
+        this.audioElement.play();
+        console.log('audio playing');
+    }
+
+    stop ()
+    {
+        this.audioElement.pause();
     }
 }
 
@@ -1138,6 +1167,7 @@ class Enemy extends Rectangle
     render ()
     {
         super.render();
+
         // check if enemy is alive
         if (this.alive)
         {
@@ -1663,8 +1693,6 @@ document.addEventListener('keydown', (event) =>
     // game menu
     if (event.key === 'Escape' && gameRunning)
     {
-        // let tempScene;
-        
         if (gameMenu.classList.contains('hidden') && gameMenuControls.classList.contains('hidden'))
         {
             // open game menu
@@ -1714,6 +1742,7 @@ playGame.addEventListener('click', () =>
 {
     reset();
     currentScene = scene0;
+    bkgrndMusic.play();
 })
 
 // controls
@@ -1901,3 +1930,6 @@ function reset ()
     // import scenes to scene manager
     sceneManager.scenes = scenes;
 }
+
+/***** Sounds *****/
+const bkgrndMusic = new Sound('assets/audio/background-music.mp3');

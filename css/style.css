@@ -1,5 +1,5 @@
 body {
-    background-image: url('/assets/images/demons-respite-arcade.PNG');
+    background-image: url('../assets/images/demons-respite-arcade.PNG');
     background-repeat: no-repeat;
     background-size: 45%;
     background-position-x: center;
@@ -193,4 +193,11 @@ canvas {
 
 .hidden {
     display: none;
+}
+
+@media only screen and (max-width: 1200px)
+{
+    body {
+        background-size: cover;
+    }
 }
