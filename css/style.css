@@ -1,29 +1,47 @@
+body {
+    background-image: url('/assets/images/demons-respite-arcade.PNG');
+    background-repeat: no-repeat;
+    background-size: 45%;
+    background-position-x: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mainMenu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30%;
+    margin: 130px 0 0 40px;
+}
+
 #mainMenuBkgrnd {
     background-color: black;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
     color: white;
     text-align: center;
 }
 
 .bar {
     color: white;
+    margin: auto 0;
 }
 
 .play-game {
-    height: 60px;
     width: 200px;
     margin: 10px;
 }
 
 .controlsBtn {
-    height: 40px;
     width: 150px;
-    margin: 20px;
+    margin: 10px;
 }
 
 button:hover {
@@ -34,7 +52,7 @@ button:hover {
     height: 30px;
     width: 100px;
     position: absolute;
-    left: 40px;
+    left: 700px;
 }
 
 .controls {
@@ -42,6 +60,16 @@ button:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin: 100px 0 0 0;
+ }
+
+#controlsImg, #gameMenuControlsImg {
+    height: 200px;
+}
+
+#gamePlanImg, #gameMenuGamePlanImg {
+    height: 90px;
+    margin: 10px;
 }
 
 .top {
@@ -49,14 +77,11 @@ button:hover {
     align-items: center;
 }
 
-#gamePlan {
-    margin: 20px;
-}
-
 .gameplay {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin: 110px 0 0 40px;
 }
 
 canvas {
@@ -71,12 +96,18 @@ canvas {
 }
 
 .health {
-    margin: 0 200px 0 0;
+    margin: 0 300px 20px 0;
+    color: white;
+}
+
+.gold {
+    color: white;
 }
 
 .bossHealth {
     display: flex;
     justify-content: center;
+    color: white;
 }
 
 .gameMenu {
@@ -87,8 +118,8 @@ canvas {
     flex-direction: column;
     justify-content: center;
     position: absolute;
-    top: 150px;
-    left: 210px;
+    top: 300px;
+    left: 830px;
 }
 
 .gameMenuControlsButton, .gameMenuReturn {
@@ -101,23 +132,25 @@ canvas {
     flex-direction: column;
     align-items: center;
     position: absolute;
-    left: 100px;
+    top: 120px;
+    left: 710px;
 }
 
 .gameMenuControlsReturn {
     position: absolute;
-    top: 30px;
-    left: 60px;
+    top: 20px;
+    left: 10px;
 }
 
 .winScreen {
     background-color: blue;
     height: 500px;
-    width: 700px;
+    width: 600px;
     display: flex;
     justify-content: center;
     flex-direction: column;
     align-items: center;
+    margin: 150px 0 0 32px;
 }
 
 #win {
@@ -138,8 +171,9 @@ canvas {
     justify-content: center;
     align-items: center;
     height: 500px;
-    width: 700px;
+    width: 600px;
     text-align: center;
+    margin: 150px 0 0 50px;
 }
 
 #lose {

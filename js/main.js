@@ -158,6 +158,10 @@ class SceneManager
             {
                 bossHealth.textContent = `Demon HP: ${boss.health}`;
             }
+            else
+            {
+                bossHealth.textContent = '';
+            }
         }
     }
 
@@ -503,9 +507,11 @@ class Player extends Rectangle
     {
         this.canUseAbility = false;
         this.useAbility = true;
+        this.skill.active = true;
         setTimeout(function()
         {
             player.canUseAbility = true;
+            player.skill.active = false;
         }, 5000)
     }
 
@@ -528,7 +534,7 @@ class Player extends Rectangle
 
             if (this.y > canvas.height - 50)
             {
-                this.y = canvas.height - 50;;
+                this.y = canvas.height - 50;
             }
         }
         // player moving left
@@ -785,7 +791,7 @@ class Weapon extends Rectangle
                     // check left/right
                     if (this.left() < boss.right() && this.right() > boss.left())
                     {
-                        if (enemy.alive)
+                        if (boss.alive)
                         {
                             boss.takeDamage(this.damage);
                             this.active = false;
@@ -870,6 +876,7 @@ class Skill extends Rectangle
         super(player.x - player.width, player.y - player.height, player.width * 3, player.height * 3, 'pink');
         this.type = type;
         this.damage = 10;
+        this.active = false;
     }
 
     render ()
@@ -879,27 +886,30 @@ class Skill extends Rectangle
         this.x = player.x - player.width;
         this.y = player.y - player.height;
 
-        // check for collisions with enemies
-        sceneManager.currentScene.enemies.forEach(enemy =>
-            {
-                //check top/bottom
-                if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+        // check if skill hitbox is active
+        if (this.active)
+        {
+            // check for collisions with enemies
+            sceneManager.currentScene.enemies.forEach(enemy =>
                 {
-                    // check left/right
-                    if (this.left() < enemy.right() && this.right() > enemy.left())
+                    //check top/bottom
+                    if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
                     {
-                        if (enemy.alive)
+                        // check left/right
+                        if (this.left() < enemy.right() && this.right() > enemy.left())
                         {
-                            enemy.takeDamage(this.damage);
-                            enemy.knockback(80);
+                            if (enemy.alive)
+                            {
+                                enemy.takeDamage(this.damage);
+                                enemy.knockback(80);
                         }
                     }
                 }
             })
-    
+            
             // check for collisions with boss
             sceneManager.currentScene.boss.forEach(boss =>
-            {
+                {
                 //check top/bottom
                 if (this.top() < boss.bottom() && this.bottom() > boss.top())
                 {
@@ -909,10 +919,12 @@ class Skill extends Rectangle
                         if (boss.alive)
                         {
                             boss.takeDamage(this.damage);
+                            this.active = false;
                         }
                     }
                 }
             })
+        }
     }
 }
 
@@ -1882,7 +1894,9 @@ function reset ()
     player.y = 235;
     player.health = 100;
     player.gold = 0;
+    boss.alive = true;
     boss.health = 100;
+    boss.fightStarted = false;
 
     // import scenes to scene manager
     sceneManager.scenes = scenes;
