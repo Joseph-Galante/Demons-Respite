@@ -396,6 +396,8 @@ class Player extends Rectangle
         this.shield;
         this.attacking = false;
         this.blocking = false;
+        this.canAttack = true;
+        this.canBlock = true;
     }
 
     type ()
@@ -459,19 +461,29 @@ class Player extends Rectangle
 
     die ()
     {
-        // game over
+        currentScene = loseScene;
     }
 
     attack ()
     {
+        this.canAttack = false;
         this.attacking = true;
         this.weapon.active = true;
+        setTimeout(function()
+        {
+            player.canAttack = true;
+        }, 800)
     }
 
     block ()
     {
+        this.canBlock = false;
         this.blocking = true;
         this.shield.active = true;
+        setTimeout(function()
+        {
+            player.canBlock = true;
+        }, 1500)
     }
 
     knockback (enemy)
@@ -571,9 +583,8 @@ class Player extends Rectangle
                     }
                     else
                     {
-                        this.takeDamage(5);
+                        this.takeDamage(10);
                         this.knockback(enemy);
-                        console.log(player.health);
                     }
                 }
             }
@@ -729,6 +740,7 @@ class Weapon extends Rectangle
                     if (this.left() < enemy.right() && this.right() > enemy.left())
                     {
                         enemy.takeDamage(this.damage);
+                        enemy.knockback(30);
                         this.active = false;
                     }
                 }
@@ -813,7 +825,7 @@ class Shield extends Rectangle
                         // check if enemy is alive
                         if (enemy.alive)
                         {
-                            enemy.knockback(30);
+                            enemy.knockback(50);
                         }
                     }
                 }
@@ -890,8 +902,6 @@ class Enemy extends Rectangle
         if (this.alive)
         {
             this.health -= damage;
-
-            this.knockback(50);
             
             if (this.health <= 0)
             {
@@ -953,6 +963,8 @@ class Enemy extends Rectangle
         }
 
         this.alive = false;
+
+        // drop gold
         this.color = 'yellow';
         this.x = this.x + this.width / 4;
         this.y = this.y + this.height / 4;
@@ -1218,29 +1230,33 @@ class Enemy extends Rectangle
                 // check left/right
                 if (this.left() < enemy.right() && this.right() > enemy.left())
                 {
-                    // enemy moving up
-                    if (this.movingUp && this.bottom() > enemy.bottom())
+                    // check if enemy is alive
+                    if (enemy.alive)
                     {
-                        this.y = enemy.bottom() + 5;
-                        this.newDirection();
-                    }
-                    // enemy moving down
-                    else if (this.movingDown && this.top() < enemy.top())
-                    {
-                        this.y = enemy.top() - this.height - 5;
-                        this.newDirection();
-                    }
-                    // enemy moving left
-                    else if (this.movingLeft && this.right() > enemy.right())
-                    {
-                        this.x = enemy.right() + 5;
-                        this.newDirection();
-                    }
-                    // enemy moving right
-                    else if (this.movingRight && this.left() < enemy.left())
-                    {
-                        this.x = enemy.left() - this.width - 5;
-                        this.newDirection();
+                        // enemy moving up
+                        if (this.movingUp && this.bottom() > enemy.bottom())
+                        {
+                            this.y = enemy.bottom() + 5;
+                            this.newDirection();
+                        }
+                        // enemy moving down
+                        else if (this.movingDown && this.top() < enemy.top())
+                        {
+                            this.y = enemy.top() - this.height - 5;
+                            this.newDirection();
+                        }
+                        // enemy moving left
+                        else if (this.movingLeft && this.right() > enemy.right())
+                        {
+                            this.x = enemy.right() + 5;
+                            this.newDirection();
+                        }
+                        // enemy moving right
+                        else if (this.movingRight && this.left() < enemy.left())
+                        {
+                            this.x = enemy.left() - this.width - 5;
+                            this.newDirection();
+                        }
                     }
                 }
             }
@@ -1572,7 +1588,7 @@ document.addEventListener('keydown', (event) =>
 // player attack
 document.addEventListener('click', () =>
 {
-    if (!player.attacking && !gamePaused)
+    if (!player.attacking && player.canAttack)
     {
         player.attack();
     }
@@ -1583,7 +1599,7 @@ document,addEventListener('auxclick', (event) =>
 {
     event.preventDefault();
 
-    if (!player.attacking && !player.blocking && !gamePaused)
+    if (!player.attacking && !player.blocking && player.canBlock)
     {
         player.block();
     }
@@ -1592,6 +1608,7 @@ document,addEventListener('auxclick', (event) =>
 // play game
 playGame.addEventListener('click', () =>
 {
+    reset();
     currentScene = scene0;
 })
 
@@ -1641,64 +1658,23 @@ let scenes = [];
 let randomScenes = [];
 
 // create scene
-const scene0 = new Scene('start');
-// populate scene
-scene0.makeScene([], [], true, false)
-// add scene to scene list
-scenes.push(scene0);
+let scene0 = new Scene('start');
 
 // create scene
-const scene1 = new Scene('4-corners');
-// populate scene
-scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
-    new Enemy(400, 240, 'left', false),
-    new Enemy(230, 350, 'right', false),
-    new Enemy(230, 150, 'up', false)
-], false, false)
-// add scene to scene list
-randomScenes.push(scene1);
+let scene1 = new Scene('4-corners');
 
-const scene2 = new Scene('equal-sign');
-scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
-    new Enemy(250, 400, 'down', false),
-    new Enemy(300, 250, 'left', false),
-    new Enemy(250, 100, 'left', false),
-], false, false)
-randomScenes.push(scene2);
+let scene2 = new Scene('equal-sign');
 
-const scene3 = new Scene('cross');
-scene3.makeScene([[2, 2], [3, 3], [4, 4], [5, 4], [6, 3], [7, 2], [2, 7], [3, 6], [4, 5], [5, 5], [6, 6], [7, 7]], [
-    new Enemy(240, 100, 'right', false),
-    new Enemy(240, 400, 'left', false)
-], false, false)
-randomScenes.push(scene3);
+let scene3 = new Scene('cross');
 
-const scene4 = new Scene('corner-pockets');
-scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6], [3, 7], [6, 6], [6, 7], [7, 6]], [
-    new Enemy(150, 230, 'right', false),
-    new Enemy(350, 230, 'left', false),
-    new Enemy(240, 100, 'down', false),
-    new Enemy(240, 400, 'up', false)
-], false, false)
-randomScenes.push(scene4);
-
-// shuffle random scenes array
-shuffle(randomScenes);
-// push randomized scenes to main scenes array
-randomScenes.forEach(scene =>
-{
-    scenes.push(scene);
-})
+let scene4 = new Scene('corner-pockets');
 
 // boss scene
-const scene5 = new Scene('boss');
+let scene5 = new Scene('boss');
 const boss = new Boss(325, 200);
-scene5.makeScene([[7, 2], [7, 7]], [boss], false, true);
-scenes.push(scene5);
 
 // win screen
 const winScene = new Scene('win');
-scenes.push(winScene);
 
 // lose screen
 const loseScene = new Scene('lose');
@@ -1712,12 +1688,12 @@ const controlsScene = new Scene('controls');
 /***** Setup *****/
 
 // create player
-const player = new Player(55, 235, 30, 30, 'blue');
+const player = new Player(235, 235, 30, 30, 'blue');
 player.weapon = new Weapon(5);
 player.shield = new Shield(50);
 
 // scene manager
-const sceneManager = new SceneManager(scenes);
+let sceneManager = new SceneManager(scenes);
 
 // first scene - main menu
 let currentScene = mainMenuScene;
@@ -1741,10 +1717,80 @@ const animate = () =>
 // Start
 animate();
 
+
 /***** Functions *****/
+
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
+}
+
+// remake all scenes
+function reset ()
+{
+    // array of scenes
+    scenes = [];
+    randomScenes = [];
+
+    // populate scene
+    scene0.makeScene([], [], true, false)
+    // add scene to scene list
+    scenes.push(scene0);
+
+    // populate scene
+    scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
+        new Enemy(400, 240, 'left', false),
+        new Enemy(230, 350, 'right', false),
+        new Enemy(230, 150, 'up', false)
+    ], false, false)
+    // add scene to scene list
+    randomScenes.push(scene1);
+
+    scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
+        new Enemy(250, 400, 'down', false),
+        new Enemy(300, 250, 'left', false),
+        new Enemy(250, 100, 'left', false),
+    ], false, false)
+    randomScenes.push(scene2);
+
+    scene3.makeScene([[2, 2], [3, 3], [4, 4], [5, 4], [6, 3], [7, 2], [2, 7], [3, 6], [4, 5], [5, 5], [6, 6], [7, 7]], [
+        new Enemy(240, 100, 'right', false),
+        new Enemy(240, 400, 'left', false)
+    ], false, false)
+    randomScenes.push(scene3);
+
+    scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6], [3, 7], [6, 6], [6, 7], [7, 6]], [
+        new Enemy(220, 230, 'right', false),
+        new Enemy(350, 230, 'left', false),
+        new Enemy(240, 100, 'down', false),
+        new Enemy(240, 400, 'up', false)
+    ], false, false)
+    randomScenes.push(scene4);
+
+    // shuffle random scenes array
+    shuffle(randomScenes);
+    // push randomized scenes to main scenes array
+    randomScenes.forEach(scene =>
+    {
+        scenes.push(scene);
+    })
+
+    // boss scene
+    scene5.makeScene([[7, 2], [7, 7]], [boss], false, true);
+    scenes.push(scene5);
+
+    // win scene
+    scenes.push(winScene);
+
+    // reset player and boss properties
+    player.x = 235;
+    player.y = 235;
+    player.health = 100;
+    player.gold = 0;
+    boss.health = 100;
+
+    // import scenes to scene manager
+    sceneManager.scenes = scenes;
 }
