@@ -600,7 +600,7 @@ class Player extends Rectangle
                     if (!enemy.alive)
                     {
                         // add gold
-                        this.gold += 2;
+                        this.gold += 10;
                         // remove enemy
                         sceneManager.currentScene.enemies.splice(sceneManager.currentScene.enemies.indexOf(enemy), 1);
                     }
