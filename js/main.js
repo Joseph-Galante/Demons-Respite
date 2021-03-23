@@ -158,6 +158,7 @@ class SceneManager
         gameRunning = false;
         gameplay.classList.add('hidden');
         gameMenu.classList.add('hidden');
+        mainMenu.classList.add('hidden');
         winScreen.classList.remove('hidden');
     }
     // lose screen
@@ -167,6 +168,7 @@ class SceneManager
         gameRunning = false;
         gameplay.classList.add('hidden');
         gameMenu.classList.add('hidden');
+        mainMenu.classList.add('hidden');
         loseScreen.classList.remove('hidden');
     }
     // main menu
@@ -1636,6 +1638,7 @@ gameMenuReturn.addEventListener('click', () =>
 
 // array of scenes
 let scenes = [];
+let randomScenes = [];
 
 // create scene
 const scene0 = new Scene('start');
@@ -1653,7 +1656,7 @@ scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
     new Enemy(230, 150, 'up', false)
 ], false, false)
 // add scene to scene list
-scenes.push(scene1);
+randomScenes.push(scene1);
 
 const scene2 = new Scene('equal-sign');
 scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
@@ -1661,14 +1664,14 @@ scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
     new Enemy(300, 250, 'left', false),
     new Enemy(250, 100, 'left', false),
 ], false, false)
-scenes.push(scene2);
+randomScenes.push(scene2);
 
 const scene3 = new Scene('cross');
 scene3.makeScene([[2, 2], [3, 3], [4, 4], [5, 4], [6, 3], [7, 2], [2, 7], [3, 6], [4, 5], [5, 5], [6, 6], [7, 7]], [
     new Enemy(240, 100, 'right', false),
     new Enemy(240, 400, 'left', false)
 ], false, false)
-scenes.push(scene3);
+randomScenes.push(scene3);
 
 const scene4 = new Scene('corner-pockets');
 scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6], [3, 7], [6, 6], [6, 7], [7, 6]], [
@@ -1677,9 +1680,15 @@ scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6]
     new Enemy(240, 100, 'down', false),
     new Enemy(240, 400, 'up', false)
 ], false, false)
-scenes.push(scene4);
+randomScenes.push(scene4);
 
-//shuffle scenes array
+// shuffle random scenes array
+shuffle(randomScenes);
+// push randomized scenes to main scenes array
+randomScenes.forEach(scene =>
+{
+    scenes.push(scene);
+})
 
 // boss scene
 const scene5 = new Scene('boss');
@@ -1731,3 +1740,11 @@ const animate = () =>
 
 // Start
 animate();
+
+/***** Functions *****/
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+}

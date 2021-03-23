@@ -110,6 +110,49 @@ canvas {
     left: 60px;
 }
 
+.winScreen {
+    background-color: blue;
+    height: 500px;
+    width: 700px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+#win {
+    margin: 60px;
+    font-size: 80px;
+}
+
+.winReturn {
+    margin: 100px;
+    height: 80px;
+    width: 300px;
+}
+
+.loseScreen {
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 500px;
+    width: 700px;
+    text-align: center;
+}
+
+#lose {
+    margin: 60px;
+    font-size: 60px;
+}
+
+.loseReturn {
+    margin: 50px;
+    height: 80px;
+    width: 300px;
+}
+
 .summary {
     padding: 10px;
 }
