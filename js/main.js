@@ -19,6 +19,11 @@ const ENEMY_ATTACK_RANGE = 5;
 const ENEMY_RADIUS = 40;
 
 
+/***** DOM Elements *****/
+const playerHealth = document.querySelector('.health');
+const playerGold = document.querySelector('.gold');
+const bossHealth = document.querySelector('.bossHealth');
+
 /***** Classes *****/
 class SceneManager
 {
@@ -61,6 +66,7 @@ class SceneManager
         scene.doors.forEach(door => door.render());
         scene.walls.forEach(wall => wall.render());
         scene.enemies.forEach(enemy => enemy.render());
+        scene.boss.forEach(boss => boss.render());
 
         // render weapon if player is attacking
         if (player.attacking)
@@ -81,6 +87,15 @@ class SceneManager
                 player.blocking = false;
             }, 600)
         }
+
+        // UI
+        playerHealth.textContent = `Health: ${player.health}`;
+        playerGold.textContent = `Gold: ${player.gold}`;
+        // if in boss fight
+        if (this.currentScene.boss.length > 0)
+        {
+            bossHealth.textContent = `Demon HP: ${boss.health}`;
+        }
     }
 }
 class Scene
@@ -92,17 +107,17 @@ class Scene
         this.floors = [];
         this.doors = [];
         this.enemies = [];
+        this.boss = [];
         this.prevDoors = [];
         this.nextDoors = [];
-        this.navMesh = [];
     }
 
-    makeScene (pillars, enemies, start)
+    makeScene (pillars, enemies, start, boss)
     {
         this.makeWalls(pillars, start);
         this.makeFloors();
         this.makeDoors(start);
-        this.makeEnemies(enemies);
+        this.makeEnemies(enemies, boss);
     }
 
     // Create walls
@@ -208,9 +223,16 @@ class Scene
     }
 
     // Create enemies
-    makeEnemies (enemies)
+    makeEnemies (enemies, boss)
     {
-        this.enemies = enemies;
+        if (boss)
+        {
+            this.boss = enemies;
+        }
+        else
+        {
+            this.enemies = enemies;
+        }
     }
 }
 
@@ -452,6 +474,39 @@ class Player extends Rectangle
             }
         })
 
+        // check collisions with boss
+        sceneManager.currentScene.boss.forEach(boss =>
+        {
+            //check top/bottom
+            if (this.top() < boss.bottom() && this.bottom() > boss.top())
+            {
+                // check left/right
+                if (this.left() < boss.right() && this.right() > boss.left())
+                {
+                    // player moving up
+                    if (this.movingUp)
+                    {
+                        this.y = boss.bottom();
+                    }
+                    // player moving down
+                    else if (this.movingDown)
+                    {
+                        this.y = boss.top() - this.height;
+                    }
+                    // player moving left
+                    else if (this.movingLeft)
+                    {
+                        this.x = boss.right();
+                    }
+                    // player moving right
+                    else if (this.movingRight)
+                    {
+                        this.x = boss.left() - this.width;
+                    }
+                }
+            }
+        })
+
         // check for player entering doors
         sceneManager.currentScene.doors.forEach(door =>
         {
@@ -574,6 +629,25 @@ class Weapon extends Rectangle
                 }
             }
         })
+
+        // check for collisions with boss
+        sceneManager.currentScene.boss.forEach(boss =>
+        {
+            // check if hitbox is active
+            if (this.active)
+            {
+                //check top/bottom
+                if (this.top() < boss.bottom() && this.bottom() > boss.top())
+                {
+                    // check left/right
+                    if (this.left() < boss.right() && this.right() > boss.left())
+                    {
+                        boss.takeDamage(this.damage);
+                        this.active = false;
+                    }
+                }
+            }
+        })
     }
 }
 
@@ -645,7 +719,7 @@ class Shield extends Rectangle
 
 class Enemy extends Rectangle
 {
-    constructor (x, y, dir)
+    constructor (x, y, dir, minion)
     {
         super(x, y, 40, 40, 'red');
         this.alive = true;
@@ -666,8 +740,9 @@ class Enemy extends Rectangle
         this.destinationReached = false;
         this.destinationSet = false;
         this.health = 10;
-        this.weapon;
         this.attacking = false;
+        this.isBoss = false;
+        this.minion = minion;
 
         // initialize starting direction
         switch (dir)
@@ -766,6 +841,12 @@ class Enemy extends Rectangle
 
     die ()
     {
+        // die immediately if minion
+        if (this.minion)
+        {
+            sceneManager.currentScene.enemies.splice(sceneManager.currentScene.enemies.indexOf(this), 1);
+        }
+
         this.alive = false;
         this.color = 'yellow';
         this.x = this.x + this.width / 4;
@@ -843,11 +924,6 @@ class Enemy extends Rectangle
         return Math.sqrt(Math.pow((player.x + player.width / 2) - (this.x + this.width / 2), 2) + Math.pow((player.y + player.height / 2) - (this.y + this.height / 2), 2));
     }
 
-    distanceToPoint (point)
-    {
-        return Math.sqrt(Math.pow(point[0] - this.x, 2) + Math.pow(point[1] - this.y, 2));
-    }
-
     render ()
     {
         super.render();
@@ -865,12 +941,6 @@ class Enemy extends Rectangle
             {
                 // chase
                 this.moveState = this.moveStates.chase;
-            }
-            // check for player within attack range
-            else if (this.distanceToPlayer() < ENEMY_ATTACK_RANGE)
-            {
-                // attack
-                this.moveState = this.moveStates.attack;
             }
 
             // movement based on current move state
@@ -966,13 +1036,6 @@ class Enemy extends Rectangle
                     this.x -= (this.x - player.x) / this.distanceToPlayer();
                     this.y -= (this.y - player.y) / this.distanceToPlayer();
                     
-                    break;
-                }
-            // attacking
-            case this.moveStates.attack:
-                {
-                    this.x = this.x;
-                    this.y = this.y;
                     break;
                 }
             }
@@ -1075,7 +1138,6 @@ class Enemy extends Rectangle
                         this.newDirection();
                     }
                 }
-
             }
         })
         // check collisions with doors in scene
@@ -1115,6 +1177,138 @@ class Enemy extends Rectangle
             }
         })
         
+        // check if outside canvas
+        if (this.top() <= 0)
+        {
+            this.y = 0;
+        }
+        if (this.bottom() >= canvas.height)
+        {
+            this.y = canvas.height;
+        }
+        if (this.left() <= 0)
+        {
+            this.x = 0;
+        }
+        if (this.right() >= canvas.width)
+        {
+            this.x = canvas.width;
+        }
+        
+    }
+}
+
+class Boss extends Rectangle
+{
+    constructor (x, y)
+    {
+        super(x, y, 100, 100, 'black');
+        this.health = 100;
+        this.maxHealth = 100;
+        this.alive = true;
+        this.fightStarted = false;
+        this.shielded = false;
+    }
+
+    takeDamage (damage)
+    {
+        if (this.alive)
+        {
+            // if not invulnerable
+            if (!this.shielded)
+            {
+                this.health -= damage;
+            }
+            // check for death
+            if (this.health <= 0)
+            {
+                this.die();
+            }
+        }
+    }
+
+    die ()
+    {
+        this.alive = false;
+        this.color = 'orange';
+        // die after 3 seconds
+        setTimeout(function()
+        {
+            sceneManager.currentScene.boss.splice(0, 1);
+        }, 3000)
+    }
+
+    summonEnemies ()
+    {
+        let enemies = [];
+        // above 50% hp
+        if (boss.health >= 50)
+        {
+            enemies = [
+                new Enemy(300, 125, 'left', true),
+                new Enemy(300, 375, 'left', true)
+            ]
+        }
+        // below 50% hp
+        if (boss.health < 50)
+        {
+            enemies = [
+                new Enemy(300, 105, 'left', true),
+                new Enemy(300, 145, 'left', true),
+                new Enemy(300, 355, 'left', true),
+                new Enemy(300, 395, 'left', true)
+            ]
+        }
+
+        enemies.forEach(enemy =>
+        {
+            sceneManager.currentScene.enemies.push(enemy);
+        })
+    }
+
+    render ()
+    {
+        super.render();
+
+        // check if boss is alive
+        if (this.alive)
+        {
+            // boss fight
+            // summon 2/4 minions while above/below 50% hp, all minions must be killed before being able to damage the boss for a short period of time
+
+            // if first render
+            if (!this.fightStarted)
+            {
+                // summon 2 minions; start fight
+                this.summonEnemies();
+                this.fightStarted = true;
+            }
+
+            // if minions are alive
+            if (sceneManager.currentScene.enemies.length > 0)
+            {
+                this.shielded = true;
+            }
+            
+            // if in shielded state
+            if (this.shielded)
+            {
+                this.color = 'cyan';
+
+                if (sceneManager.currentScene.enemies.length <= 0)
+                {
+                    this.shielded = false;
+                    this.color = 'black';
+                    // resummon minions after 5 seconds
+                    setTimeout(this.summonEnemies, 5000);
+                }
+            }
+        }
+        // dead
+        else
+        {
+            sceneManager.currentScene.enemies = [];
+        }
     }
 }
 
@@ -1175,7 +1369,7 @@ class Door extends Rectangle
     {
         super.render();
         // check for empty room
-        if (sceneManager.currentScene.enemies.length > 0)
+        if (sceneManager.currentScene.enemies.length > 0 || sceneManager.currentScene.boss.length > 0)
         {
             // enemies or gold remaining - lock doors
             this.locked();
@@ -1278,37 +1472,61 @@ document,addEventListener('auxclick', (event) =>
 let scenes = [];
 
 // create scene
-const scene0 = new Scene('scene0');
+const scene0 = new Scene('start');
 // populate scene
-scene0.makeScene([], [], true)
+scene0.makeScene([], [], true, false)
 // add scene to scene list
 scenes.push(scene0);
 
 // create scene
-const scene1 = new Scene('scene1');
+const scene1 = new Scene('4-corners');
 // populate scene
 scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
-    new Enemy(400, 240, 'left'),
-    new Enemy(230, 350, 'right'),
-    new Enemy(230, 150, 'up')
-], false)
+    new Enemy(400, 240, 'left', false),
+    new Enemy(230, 350, 'right', false),
+    new Enemy(230, 150, 'up', false)
+], false, false)
 // add scene to scene list
 scenes.push(scene1);
 
-const scene2 = new Scene('scene2');
+const scene2 = new Scene('equal-sign');
 scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
-    new Enemy(250, 400, 'down'),
-    new Enemy (300, 250, 'left'),
-    new Enemy (250, 100, 'left'),
-], false)
+    new Enemy(250, 400, 'down', false),
+    new Enemy(300, 250, 'left', false),
+    new Enemy(250, 100, 'left', false),
+], false, false)
 scenes.push(scene2);
 
+const scene3 = new Scene('cross');
+scene3.makeScene([[2, 2], [3, 3], [4, 4], [5, 4], [6, 3], [7, 2], [2, 7], [3, 6], [4, 5], [5, 5], [6, 6], [7, 7]], [
+    new Enemy(240, 100, 'right', false),
+    new Enemy(240, 400, 'left', false)
+], false, false)
+scenes.push(scene3);
 
+const scene4 = new Scene('corner-pockets');
+scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6], [3, 7], [6, 6], [6, 7], [7, 6]], [
+    new Enemy(350, 200, 'left', false),
+    new Enemy(350, 300, 'left', false),
+    new Enemy(240, 100, 'down', false),
+    new Enemy(240, 400, 'up', false)
+], false, false)
+scenes.push(scene4);
+
+// boss scene
+const scene5 = new Scene('boss');
+const boss = new Boss(325, 200);
+scene5.makeScene([[7, 2], [7, 7]], [boss], false, true);
+scenes.push(scene5);
+
+// win scene
+const scene6 = new Scene('win');
+scenes.push(scene6);
 
 /***** Setup *****/
 
 // create player
-const player = new Player(235, 235, 30, 30, 'blue');
+const player = new Player(55, 235, 30, 30, 'blue');
 player.weapon = new Weapon(5);
 player.shield = new Shield(50);
 
@@ -1324,8 +1542,7 @@ const animate = () =>
     // clear canvas
     context.clearRect(0, 0, canvas.width, canvas.height);
     // render scene
-    // sceneManager.loadScene(scene2);
-    sceneManager.loadScene(currentScene);
+    sceneManager.loadScene(scene5);
     // render player
     player.render();
     // check for collisions
