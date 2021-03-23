@@ -139,6 +139,16 @@ class SceneManager
                     player.blocking = false;
                 }, 600)
             }
+
+            // render ability if player is using one
+            if (player.useAbility)
+            {
+                player.skill.render();
+                setTimeout(function()
+                {
+                    player.useAbility = false;
+                }, 200)
+            }
             
             // UI
             playerHealth.textContent = `Health: ${player.health}`;
@@ -394,10 +404,13 @@ class Player extends Rectangle
         this.movingRight = false;
         this.weapon;
         this.shield;
+        this.skill;
         this.attacking = false;
         this.blocking = false;
+        this.useAbility = false;
         this.canAttack = true;
         this.canBlock = true;
+        this.canUseAbility = true;
     }
 
     type ()
@@ -484,6 +497,16 @@ class Player extends Rectangle
         {
             player.canBlock = true;
         }, 1500)
+    }
+
+    ability ()
+    {
+        this.canUseAbility = false;
+        this.useAbility = true;
+        setTimeout(function()
+        {
+            player.canUseAbility = true;
+        }, 5000)
     }
 
     knockback (enemy)
@@ -739,9 +762,12 @@ class Weapon extends Rectangle
                     // check left/right
                     if (this.left() < enemy.right() && this.right() > enemy.left())
                     {
-                        enemy.takeDamage(this.damage);
-                        enemy.knockback(30);
-                        this.active = false;
+                        if (enemy.alive)
+                        {
+                            enemy.takeDamage(this.damage);
+                            enemy.knockback(30);
+                            this.active = false;
+                        }
                     }
                 }
             }
@@ -759,8 +785,11 @@ class Weapon extends Rectangle
                     // check left/right
                     if (this.left() < boss.right() && this.right() > boss.left())
                     {
-                        boss.takeDamage(this.damage);
-                        this.active = false;
+                        if (enemy.alive)
+                        {
+                            boss.takeDamage(this.damage);
+                            this.active = false;
+                        }
                     }
                 }
             }
@@ -770,7 +799,7 @@ class Weapon extends Rectangle
 
 class Shield extends Rectangle
 {
-    constructor(blockPower)
+    constructor (blockPower)
     {
         super(player.x + player.width, player.y + player.height / 4, 30, 15, 'brown');
         this.blockPower = blockPower;
@@ -831,6 +860,59 @@ class Shield extends Rectangle
                 }
             }
         })
+    }
+}
+
+class Skill extends Rectangle
+{
+    constructor (type)
+    {
+        super(player.x - player.width, player.y - player.height, player.width * 3, player.height * 3, 'pink');
+        this.type = type;
+        this.damage = 10;
+    }
+
+    render ()
+    {
+        super.render();
+
+        this.x = player.x - player.width;
+        this.y = player.y - player.height;
+
+        // check for collisions with enemies
+        sceneManager.currentScene.enemies.forEach(enemy =>
+            {
+                //check top/bottom
+                if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+                {
+                    // check left/right
+                    if (this.left() < enemy.right() && this.right() > enemy.left())
+                    {
+                        if (enemy.alive)
+                        {
+                            enemy.takeDamage(this.damage);
+                            enemy.knockback(80);
+                        }
+                    }
+                }
+            })
+    
+            // check for collisions with boss
+            sceneManager.currentScene.boss.forEach(boss =>
+            {
+                //check top/bottom
+                if (this.top() < boss.bottom() && this.bottom() > boss.top())
+                {
+                    // check left/right
+                    if (this.left() < boss.right() && this.right() > boss.left())
+                    {
+                        if (boss.alive)
+                        {
+                            boss.takeDamage(this.damage);
+                        }
+                    }
+                }
+            })
     }
 }
 
@@ -1231,7 +1313,7 @@ class Enemy extends Rectangle
                 if (this.left() < enemy.right() && this.right() > enemy.left())
                 {
                     // check if enemy is alive
-                    if (enemy.alive)
+                    if (enemy.alive && this.alive)
                     {
                         // enemy moving up
                         if (this.movingUp && this.bottom() > enemy.bottom())
@@ -1509,7 +1591,7 @@ class Door extends Rectangle
 // player movement - handles canvas collisions as well
 document.addEventListener('keydown', (event) =>
 {
-    if (event.key === 'w')
+    if (event.key === 'w' && gameRunning && !gamePaused)
     {
         // change direction
         player.direction('up');
@@ -1523,7 +1605,7 @@ document.addEventListener('keydown', (event) =>
             player.y -= PLAYER_SPEED;
         }
     }
-    if (event.key === 'd')
+    if (event.key === 'd' && gameRunning && !gamePaused)
     {
         // change direction
         player.direction('right');
@@ -1537,7 +1619,7 @@ document.addEventListener('keydown', (event) =>
             player.x += PLAYER_SPEED;
         }  
     }
-    if (event.key === 'a')
+    if (event.key === 'a' && gameRunning && !gamePaused)
     {
         // change direction
         player.direction('left');
@@ -1551,7 +1633,7 @@ document.addEventListener('keydown', (event) =>
             player.x -= PLAYER_SPEED;
         }  
     }
-    if (event.key === 's')
+    if (event.key === 's' && gameRunning && !gamePaused)
     {
         // change direction
         player.direction('down');
@@ -1566,6 +1648,7 @@ document.addEventListener('keydown', (event) =>
         }  
     }
     
+    // game menu
     if (event.key === 'Escape' && gameRunning)
     {
         // let tempScene;
@@ -1583,12 +1666,21 @@ document.addEventListener('keydown', (event) =>
             gamePaused = false;
         }
     }
+
+    // player ability
+    if (event.key === ' ' && gameRunning && !gamePaused)
+    {
+        if (player.canUseAbility)
+        {
+            player.ability();
+        }
+    }
 });
 
 // player attack
 document.addEventListener('click', () =>
 {
-    if (!player.attacking && player.canAttack)
+    if (!player.attacking && player.canAttack && !gamePaused)
     {
         player.attack();
     }
@@ -1599,7 +1691,7 @@ document,addEventListener('auxclick', (event) =>
 {
     event.preventDefault();
 
-    if (!player.attacking && !player.blocking && player.canBlock)
+    if (!player.attacking && player.canBlock && !gamePaused)
     {
         player.block();
     }
@@ -1691,6 +1783,7 @@ const controlsScene = new Scene('controls');
 const player = new Player(235, 235, 30, 30, 'blue');
 player.weapon = new Weapon(5);
 player.shield = new Shield(50);
+player.skill = new Skill('slam');
 
 // scene manager
 let sceneManager = new SceneManager(scenes);
