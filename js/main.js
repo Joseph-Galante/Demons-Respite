@@ -441,7 +441,7 @@ class Player extends Rectangle
         this.movingUp = false;
         this.movingDown = false;
         this.movingLeft = false;
-        this.movingRight = false;
+        this.movingRight = true;
         this.weapon;
         this.shield;
         this.skill;
@@ -612,6 +612,44 @@ class Player extends Rectangle
 
     isCollidingWith ()
     {
+        // render forward
+        // player moving up
+        if (this.movingUp)
+        {
+            // eyes
+            context.fillStyle = 'white'
+            context.fillRect(this.x + this.width / 3 - 2, this.y, 3, 3);
+            context.fillStyle = 'white'
+            context.fillRect(this.x + this.width / 3 + 8, this.y, 3, 3);
+        }
+        // player moving down
+        else if (this.movingDown)
+        {
+            // eyes
+            context.fillStyle = 'white'
+            context.fillRect(this.x + this.width / 3 - 2, this.y + this.height - 3, 3, 3);
+            context.fillStyle = 'white'
+            context.fillRect(this.x + this.width / 3 + 8, this.y + this.height - 3, 3, 3);
+        }
+        // player moving left
+        else if (this.movingLeft)
+        {
+            // eyes
+            context.fillStyle = 'white'
+            context.fillRect(this.x, this.y + this.height / 3 - 2, 3, 3);
+            context.fillStyle = 'white'
+            context.fillRect(this.x, this.y + this.height / 3 + 8, 3, 3);
+        }
+        // player moving right
+        else if (this.movingRight)
+        {
+            // eyes
+            context.fillStyle = 'white'
+            context.fillRect(this.x + this.width - 3, this.y + this.height / 3 - 2, 3, 3);
+            context.fillStyle = 'white'
+            context.fillRect(this.x + this.width - 3, this.y + this.height / 3 + 8, 3, 3);
+        }
+
         // check collisions with walls in scene
         sceneManager.currentScene.walls.forEach(wall =>
         {
@@ -1861,7 +1899,8 @@ let sceneManager = new SceneManager(scenes);
 let currentScene = mainMenuScene;
 
 /*===================== Game Loop ======================*/
-const animate = () =>
+// Static frame rate of 50FPS
+const frame = setInterval(() =>
 {
     // clear canvas
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -1871,13 +1910,8 @@ const animate = () =>
     player.render();
     // check for collisions
     player.isCollidingWith();
-    // call animate again when possible
-    requestAnimationFrame(animate);
-}
+}, 16.67);
 /*======================================================*/
-
-// Start
-animate();
 
 
 /***** Functions *****/
