@@ -113,6 +113,11 @@ canvas {
     font-size: 22px;
 }
 
+.timeUI {
+    color: white;
+    margin: 0 80px 20px 0;
+    font-size: 20px;
+}
 
 .bossHealth {
     display: flex;
@@ -123,7 +128,7 @@ canvas {
 
 .abilityCooldown {
     background-color: pink;
-    margin: 0 280px 20px 0;
+    margin: 0 80px 20px 0;
     height: 20px;
     width: 20px;
 }

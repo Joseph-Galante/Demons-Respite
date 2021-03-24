@@ -13,6 +13,7 @@ const context = canvas.getContext('2d');
 /***** Variables *****/
 let gamePaused = false;
 let gameRunning = false;
+let time = 0;
 
 
 /***** Constants *****/
@@ -48,6 +49,7 @@ const gameMenuControlsReturn = document.querySelector('.gameMenuControlsReturn')
 const gameMenuReturn = document.querySelector('.gameMenuReturn');
 const gameMenuControls = document.querySelector('.gameMenuControls');
 const abilityCooldown = document.querySelector('.abilityCooldown');
+const timeUI = document.querySelector('.timeUI');
 
 
 /***** Classes *****/
@@ -578,7 +580,7 @@ class Player extends Rectangle
         {
             player.canUseAbility = true;
             player.skill.active = false;
-            abilityCooldown.classList.remove('cooldown'); 
+            abilityCooldown.classList.remove('cooldown');
         }, 5000)
     }
 
@@ -1932,6 +1934,9 @@ player.weapon = new Weapon(5);
 player.shield = new Shield(50);
 player.skill = new Skill('slam');
 
+// start time for timer
+let startTime;
+
 // scene manager
 let sceneManager = new SceneManager(scenes);
 
@@ -1950,6 +1955,8 @@ const frame = setInterval(() =>
     player.render();
     // check for collisions
     player.isCollidingWith();
+    // timer
+    timer();
 }, 16.67);
 /*======================================================*/
 
@@ -1966,6 +1973,9 @@ function shuffle(array) {
 // remake all scenes
 function reset ()
 {
+    // get time
+    startTime = Date.now();
+
     // array of scenes
     scenes = [];
     randomScenes = [];
@@ -2038,6 +2048,20 @@ function reset ()
     // import scenes to scene manager
     sceneManager.scenes = scenes;
 }
+
+function timer ()
+{
+    // ticks every ~1000ms
+    if (Date.now() - startTime >= 1000)
+    {
+        // update timer
+        time += 1;
+        timeUI.textContent = `Time: ${time}`;
+        // set new start time
+        startTime = Date.now();
+    }
+}
+
 
 /***** Sounds *****/
 const bkgrndMusic = document.querySelector('#bkgrndMusic');
