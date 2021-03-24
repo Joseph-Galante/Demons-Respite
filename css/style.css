@@ -210,6 +210,14 @@ canvas {
     body {
         background-size: 95%;
     }
+    
+    .gameplay {
+        position: absolute;
+        top: 3%;
+        right: auto;
+        left: 23%;
+        bottom: auto;
+    }
 
     .gameMenu {
         height: 40%;
@@ -225,11 +233,11 @@ canvas {
         height: 10%;
     }
 
-    .gameplay {
+    .gameMenuControls {
         position: absolute;
-        top: 3%;
+        top: 15%;
         right: auto;
-        left: 23%;
+        left: 23.5%;
         bottom: auto;
     }
 

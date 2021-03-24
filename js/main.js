@@ -518,7 +518,9 @@ class Player extends Rectangle
 
     die ()
     {
+        currentScene.enemies = [];
         bkgrndMusic.pause();
+        bossAudio.pause();
         currentScene = loseScene;
     }
 
@@ -1796,7 +1798,7 @@ loseReturnButton.addEventListener('click', () =>
 gameMenuControlsButton.addEventListener('click', () =>
 {
     gameMenuControls.classList.remove('hidden');
-    gameMenu.classList.add('hidden');
+    // gameMenu.classList.add('hidden');
 })
 // game menu controls return - return to game menu
 gameMenuControlsReturn.addEventListener('click', () =>
