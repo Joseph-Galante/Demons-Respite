@@ -168,6 +168,7 @@ class SceneManager
             else
             {
                 bossHealth.textContent = '';
+                bossAudio.pause();
             }
         }
     }
