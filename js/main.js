@@ -1939,7 +1939,7 @@ let sceneManager = new SceneManager(scenes);
 let currentScene = mainMenuScene;
 
 /*===================== Game Loop ======================*/
-// Static frame rate of 50FPS
+// Static frame rate of 60FPS
 const frame = setInterval(() =>
 {
     // clear canvas
