@@ -2070,6 +2070,9 @@ function reset ()
     player.y = 235;
     player.health = 100;
     player.gold = 0;
+    player.canUseAbility = true;
+    player.canAttack = true;
+    player.canBlock = true;
     boss.alive = true;
     boss.health = 100;
     boss.fightStarted = false;
