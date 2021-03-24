@@ -215,6 +215,11 @@ canvas {
     width: 300px;
 }
 
+.loseFinalScore, .winFinalScore {
+    color: white;
+    font-size: 20px;
+}
+
 .summary {
     padding: 10px;
 }

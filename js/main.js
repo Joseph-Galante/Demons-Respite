@@ -50,6 +50,9 @@ const gameMenuReturn = document.querySelector('.gameMenuReturn');
 const gameMenuControls = document.querySelector('.gameMenuControls');
 const abilityCooldown = document.querySelector('.abilityCooldown');
 const timeUI = document.querySelector('.timeUI');
+const loseFinalScore = document.querySelector('.loseFinalScore');
+const winFinalScore = document.querySelector('.winFinalScore');
+
 
 
 /***** Classes *****/
@@ -162,6 +165,7 @@ class SceneManager
             // UI
             playerHealth.textContent = `Health: ${player.health}`;
             playerGold.textContent = `Gold: ${player.gold}`;
+            timeUI.textContent = `Time: ${time}`;
             // if in boss fight
             if (this.currentScene.boss.length > 0)
             {
@@ -189,6 +193,9 @@ class SceneManager
         gameplay.classList.add('hidden');
         gameMenu.classList.add('hidden');
         mainMenu.classList.add('hidden');
+
+        // add final score
+        winFinalScore.textContent = `Final time: ${time} || Final gold: ${player.gold}`;
         winScreen.classList.remove('hidden');
     }
     // lose screen
@@ -199,6 +206,9 @@ class SceneManager
         gameplay.classList.add('hidden');
         gameMenu.classList.add('hidden');
         mainMenu.classList.add('hidden');
+
+        // add final score
+        loseFinalScore.textContent = `Final time: ${time} || Final gold: ${player.gold}`;
         loseScreen.classList.remove('hidden');
     }
     // main menu
@@ -2051,14 +2061,17 @@ function reset ()
 
 function timer ()
 {
-    // ticks every ~1000ms
-    if (Date.now() - startTime >= 1000)
+    // check if game is running
+    if (gameRunning)
     {
-        // update timer
-        time += 1;
-        timeUI.textContent = `Time: ${time}`;
-        // set new start time
-        startTime = Date.now();
+        // ticks every ~1000ms
+        if (Date.now() - startTime >= 1000)
+        {
+            // update timer
+            time += 1;
+            // set new start time
+            startTime = Date.now();
+        }
     }
 }
 
