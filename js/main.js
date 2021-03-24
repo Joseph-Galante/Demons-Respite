@@ -2071,6 +2071,7 @@ function reset ()
     player.health = 100;
     player.gold = 0;
     player.canUseAbility = true;
+    abilityCooldown.classList.remove('cooldown');
     player.canAttack = true;
     player.canBlock = true;
     boss.alive = true;
