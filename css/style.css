@@ -232,4 +232,12 @@ canvas {
         left: 23%;
         bottom: auto;
     }
+
+    .return {
+        position: absolute;
+        top: 13%;
+        right: auto;
+        left: 23%;
+        bottom: auto;
+    }
 }

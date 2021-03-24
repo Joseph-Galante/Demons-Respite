@@ -162,6 +162,8 @@ class SceneManager
             if (this.currentScene.boss.length > 0)
             {
                 bossHealth.textContent = `Demon HP: ${boss.health}`;
+                bkgrndMusic.pause();
+                bossAudio.play();
             }
             else
             {
@@ -173,6 +175,10 @@ class SceneManager
     // win screen
     winScene ()
     {
+        // reset boss audio
+        bossAudio.pause();
+        bossAudio.currentTime = 0;
+
         gamePaused = true;
         gameRunning = false;
         gameplay.classList.add('hidden');
@@ -365,7 +371,7 @@ class Sound
     constructor (source)
     {
         this.audioElement = document.createElement('audio');
-        this.source = source;
+        this.audioElement.source = source;
         this.audioElement.setAttribute("preload", "auto");
         this.audioElement.setAttribute("controls", "none");
         this.audioElement.style.display = "none";
@@ -497,6 +503,10 @@ class Player extends Rectangle
 
     takeDamage (damage)
     {
+        // rewind hurt audio and play
+        hurtAudio.currentTime = 0;
+        hurtAudio.play();
+
         this.health -= damage;
 
         if (this.health <= 0)
@@ -507,11 +517,16 @@ class Player extends Rectangle
 
     die ()
     {
+        bkgrndMusic.pause();
         currentScene = loseScene;
     }
 
     attack ()
     {
+        // rewind attack audio and play
+        attackAudio.currentTime = 0;
+        attackAudio.play();
+
         this.canAttack = false;
         this.attacking = true;
         this.weapon.active = true;
@@ -534,6 +549,10 @@ class Player extends Rectangle
 
     ability ()
     {
+        // rewind slam audio and play
+        slamAudio.currentTime = 0;
+        slamAudio.play();
+
         this.canUseAbility = false;
         this.useAbility = true;
         this.skill.active = true;
@@ -890,6 +909,10 @@ class Shield extends Rectangle
                         if (enemy.alive)
                         {
                             enemy.knockback(50);
+
+                            // rewind block audio and play it
+                            blockAudio.currentTime = 0;
+                            blockAudio.play();
                         }
                     }
                 }
@@ -1698,12 +1721,14 @@ document.addEventListener('keydown', (event) =>
             // open game menu
             gameMenu.classList.remove('hidden');
             gamePaused = true;
+            bkgrndMusic.pause();
         }
         else
         {
             // return to game
             gameMenu.classList.add('hidden');
             gamePaused = false;
+            bkgrndMusic.play();
         }
     }
 
@@ -1927,9 +1952,17 @@ function reset ()
     boss.health = 100;
     boss.fightStarted = false;
 
+    // rewind background music
+    bkgrndMusic.currentTime = 0;
+
     // import scenes to scene manager
     sceneManager.scenes = scenes;
 }
 
 /***** Sounds *****/
-const bkgrndMusic = new Sound('assets/audio/background-music.mp3');
+const bkgrndMusic = document.querySelector('#bkgrndMusic');
+const attackAudio = document.querySelector('#attackAudio');
+const hurtAudio = document.querySelector('#hurtAudio');
+const slamAudio = document.querySelector('#slamAudio');
+const blockAudio = document.querySelector('#blockAudio');
+const bossAudio = document.querySelector('#bossAudio');
