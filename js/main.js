@@ -1601,30 +1601,34 @@ class Boss extends Rectangle
 
     summonEnemies ()
     {
-        let enemies = [];
-        // above 50% hp
-        if (boss.health >= 50)
+        // check if boss is alive
+        if (boss.alive)
         {
-            enemies = [
-                new Enemy(300, 125, 'left', true),
-                new Enemy(300, 375, 'left', true)
-            ]
+            let enemies = [];
+            // above 50% hp
+            if (boss.health >= 50)
+            {
+                enemies = [
+                    new Enemy(300, 125, 'left', true),
+                    new Enemy(300, 375, 'left', true)
+                ]
+            }
+            // below 50% hp
+            if (boss.health < 50)
+            {
+                enemies = [
+                    new Enemy(300, 105, 'left', true),
+                    new Enemy(300, 145, 'left', true),
+                    new Enemy(300, 355, 'left', true),
+                    new Enemy(300, 395, 'left', true)
+                ]
+            }
+            
+            enemies.forEach(enemy =>
+            {
+                sceneManager.currentScene.enemies.push(enemy);
+            })
         }
-        // below 50% hp
-        if (boss.health < 50)
-        {
-            enemies = [
-                new Enemy(300, 105, 'left', true),
-                new Enemy(300, 145, 'left', true),
-                new Enemy(300, 355, 'left', true),
-                new Enemy(300, 395, 'left', true)
-            ]
-        }
-
-        enemies.forEach(enemy =>
-        {
-            sceneManager.currentScene.enemies.push(enemy);
-        })
     }
 
     render ()
@@ -1985,6 +1989,15 @@ function reset ()
 {
     // get time
     startTime = Date.now();
+
+    // remove pickups from every scene
+    sceneManager.scenes.forEach(scene =>
+    {
+        scene.pickups.forEach(pickup =>
+        {
+            scene.pickups.splice(scene.pickups.indexOf(pickup), 1);
+        })
+    })
 
     // array of scenes
     scenes = [];
