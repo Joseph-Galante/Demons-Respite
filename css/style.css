@@ -103,16 +103,19 @@ canvas {
 .health {
     margin: 0 300px 20px 0;
     color: white;
+    font-size: 22px;
 }
 
 .gold {
     color: white;
+    font-size: 22px;
 }
 
 .bossHealth {
     display: flex;
     justify-content: center;
     color: white;
+    font-size: 22px;
 }
 
 .gameMenu {
