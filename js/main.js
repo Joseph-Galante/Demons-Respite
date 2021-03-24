@@ -2052,6 +2052,7 @@ function reset ()
 
     // rewind background music
     bkgrndMusic.currentTime = 0;
+    bossAudio.currentTime = 0;
 
     // import scenes to scene manager
     sceneManager.scenes = scenes;
