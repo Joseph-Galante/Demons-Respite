@@ -47,6 +47,7 @@ const gameMenuControlsButton = document.querySelector('.gameMenuControlsButton')
 const gameMenuControlsReturn = document.querySelector('.gameMenuControlsReturn');
 const gameMenuReturn = document.querySelector('.gameMenuReturn');
 const gameMenuControls = document.querySelector('.gameMenuControls');
+const abilityCooldown = document.querySelector('.abilityCooldown');
 
 
 /***** Classes *****/
@@ -122,6 +123,7 @@ class SceneManager
             scene.floors.forEach(floor => context.strokeRect(floor.x, floor.y, floor.width, floor.height));
             scene.doors.forEach(door => door.render());
             scene.walls.forEach(wall => wall.render());
+            scene.pickups.forEach(pickup => pickup.render());
             scene.enemies.forEach(enemy => enemy.render());
             scene.boss.forEach(boss => boss.render());
             
@@ -241,6 +243,7 @@ class Scene
         this.boss = [];
         this.prevDoors = [];
         this.nextDoors = [];
+        this.pickups = [];
     }
 
     makeScene (pillars, enemies, start, boss)
@@ -431,6 +434,16 @@ class Rectangle
     }
 }
 
+class Pickup extends Rectangle
+{
+    constructor (x, y, color, type, value)
+    {
+        super(x, y, 20, 20, color)
+        this.type = type;
+        this.value = value;
+    }
+}
+
 class Player extends Rectangle
 {
     constructor (x, y)
@@ -559,10 +572,13 @@ class Player extends Rectangle
         this.canUseAbility = false;
         this.useAbility = true;
         this.skill.active = true;
+        abilityCooldown.classList.add('cooldown');
+
         setTimeout(function()
         {
             player.canUseAbility = true;
             player.skill.active = false;
+            abilityCooldown.classList.remove('cooldown'); 
         }, 5000)
     }
 
@@ -684,25 +700,51 @@ class Player extends Rectangle
         })
 
         // check collisions with enemies of scene
-        sceneManager.currentScene.enemies.forEach(enemy =>
+        sceneManager.currentScene.pickups.forEach(pickup =>
         {
             //check top/bottom
-            if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+            if (this.top() < pickup.bottom() && this.bottom() > pickup.top())
             {
                 // check left/right
-                if (this.left() < enemy.right() && this.right() > enemy.left())
+                if (this.left() < pickup.right() && this.right() > pickup.left())
                 {
-                    if (!enemy.alive)
+                        if (pickup.type === 'gold')
+                        {
+                            // add gold
+                            this.gold += pickup.value;
+                            // remove pickup
+                            currentScene.pickups.splice(currentScene.pickups.indexOf(pickup), 1);
+                        }
+                        else if (pickup.type === 'food')
+                        {
+                            // add health
+                            this.health += pickup.value;
+                            // prevent overhealing
+                            if (this.health > 100)
+                            {
+                                this.health = 100;
+                            }
+                            // remove pickup
+                            currentScene.pickups.splice(currentScene.pickups.indexOf(pickup), 1);
+                        }
+                }
+            }
+        })
+
+        // check collisions with enemies of scene
+        sceneManager.currentScene.enemies.forEach(enemy =>
+        {
+            // check if enemy is alive
+            if (enemy.alive)
+            {
+                //check top/bottom
+                if (this.top() < enemy.bottom() && this.bottom() > enemy.top())
+                {
+                    // check left/right
+                    if (this.left() < enemy.right() && this.right() > enemy.left())
                     {
-                        // add gold
-                        this.gold += 10;
-                        // remove enemy
-                        sceneManager.currentScene.enemies.splice(sceneManager.currentScene.enemies.indexOf(enemy), 1);
-                    }
-                    else
-                    {
-                        this.takeDamage(10);
-                        this.knockback(enemy);
+                            this.takeDamage(10);
+                            this.knockback(enemy);
                     }
                 }
             }
@@ -1143,20 +1185,18 @@ class Enemy extends Rectangle
 
     die ()
     {
-        // die immediately if minion
-        if (this.minion)
-        {
-            sceneManager.currentScene.enemies.splice(sceneManager.currentScene.enemies.indexOf(this), 1);
-        }
-
         this.alive = false;
 
         // drop gold
-        this.color = 'yellow';
-        this.x = this.x + this.width / 4;
-        this.y = this.y + this.height / 4;
-        this.width /= 2;
-        this.height /= 2;
+        currentScene.pickups.push(new Pickup(this.x - 5, this.y - 5, 'yellow', 'gold', 20));
+        //1:5 chance to drop food
+        if (Math.floor(Math.random() * 5) === 0 && !this.minion)
+        {
+            currentScene.pickups.push(new Pickup(this.x + this.width + 5, this.y + this.height + 5, 'salmon', 'food', 50));
+        }
+
+        // remove enemy
+        currentScene.enemies.splice(currentScene.enemies.indexOf(this), 1);
     }
 
     getDirection ()
