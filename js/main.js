@@ -54,7 +54,6 @@ const loseFinalScore = document.querySelector('.loseFinalScore');
 const winFinalScore = document.querySelector('.winFinalScore');
 
 
-
 /***** Classes *****/
 class SceneManager
 {
@@ -388,30 +387,6 @@ class Scene
         {
             this.enemies = enemies;
         }
-    }
-}
-
-class Sound
-{
-    constructor (source)
-    {
-        this.audioElement = document.createElement('audio');
-        this.audioElement.source = source;
-        this.audioElement.setAttribute("preload", "auto");
-        this.audioElement.setAttribute("controls", "none");
-        this.audioElement.style.display = "none";
-        document.body.appendChild(this.audioElement);
-    }
-
-    play ()
-    {
-        this.audioElement.play();
-        console.log('audio playing');
-    }
-
-    stop ()
-    {
-        this.audioElement.pause();
     }
 }
 
@@ -1758,7 +1733,6 @@ class Door extends Rectangle
 
 
 /***** Event Listeners *****/
-
 // player movement - handles canvas collisions as well
 document.addEventListener('keydown', (event) =>
 {
@@ -1916,7 +1890,6 @@ gameMenuReturn.addEventListener('click', () =>
 })
 
 /***** Scenes  *****/
-
 // array of scenes
 let scenes = [];
 let randomScenes = [];
@@ -1950,7 +1923,6 @@ const mainMenuScene = new Scene('mainMenu');
 const controlsScene = new Scene('controls');
 
 /***** Setup *****/
-
 // create player
 const player = new Player(235, 235, 30, 30, 'blue');
 player.weapon = new Weapon(5);
@@ -1985,7 +1957,6 @@ const frame = setInterval(() =>
 
 
 /***** Functions *****/
-
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
