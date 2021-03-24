@@ -214,6 +214,15 @@ class SceneManager
     // main menu
     mainMenu ()
     {
+        // remove pickups from every scene
+        sceneManager.scenes.forEach(scene =>
+        {
+            scene.pickups.forEach(pickup =>
+            {
+                scene.pickups.splice(scene.pickups.indexOf(pickup), 1);
+            })
+        })
+
         gamePaused = true;
         gameRunning = false;
         gameplay.classList.add('hidden');
