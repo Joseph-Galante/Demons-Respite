@@ -1896,12 +1896,12 @@ function reset ()
     scenes = [];
     randomScenes = [];
 
-    // populate scene
+    // start scene
     scene0.makeScene([], [], true, false)
     // add scene to scene list
     scenes.push(scene0);
 
-    // populate scene
+    // 4-corners scene
     scene1.makeScene([[2,2], [7,2], [2,7], [7,7]], [
         new Enemy(400, 240, 'left', false),
         new Enemy(230, 350, 'right', false),
@@ -1910,6 +1910,7 @@ function reset ()
     // add scene to scene list
     randomScenes.push(scene1);
 
+    // equal sign scene
     scene2.makeScene([[3,3], [4,3], [5,3], [6,3], [3,6], [4,6], [5,6], [6,6]], [
         new Enemy(250, 400, 'down', false),
         new Enemy(300, 250, 'left', false),
@@ -1917,12 +1918,14 @@ function reset ()
     ], false, false)
     randomScenes.push(scene2);
 
+    // cross scene
     scene3.makeScene([[2, 2], [3, 3], [4, 4], [5, 4], [6, 3], [7, 2], [2, 7], [3, 6], [4, 5], [5, 5], [6, 6], [7, 7]], [
-        new Enemy(240, 100, 'right', false),
-        new Enemy(240, 400, 'left', false)
+        new Enemy(260, 55, 'right', false),
+        new Enemy(260, 445, 'left', false)
     ], false, false)
     randomScenes.push(scene3);
 
+    // corner pockets scene
     scene4.makeScene([[2, 3], [3, 3], [3, 2], [6, 2], [6, 3], [7, 3], [2, 6], [3, 6], [3, 7], [6, 6], [6, 7], [7, 6]], [
         new Enemy(220, 230, 'right', false),
         new Enemy(350, 230, 'left', false),
