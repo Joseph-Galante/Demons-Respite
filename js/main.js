@@ -2051,6 +2051,7 @@ function reset ()
     boss.alive = true;
     boss.health = 100;
     boss.fightStarted = false;
+    time = 0;
 
     // rewind background music
     bkgrndMusic.currentTime = 0;
