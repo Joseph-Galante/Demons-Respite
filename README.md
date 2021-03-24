@@ -2,7 +2,7 @@
 GA Solo Project 1
 
 ## Overview
-Demon's Respite is a rogue-like dungeon crawler similar to the Binding of Isaac. The game throws the player into a dungeon and requires them to traverse the dungeon's many rooms while gearing up in preparation to ultimately fight the evil boss, The Demon.
+Demon's Respite is a rogue-like dungeon crawler similar to the Binding of Isaac. The game throws the player into a dungeon and requires them to traverse the dungeon's many rooms while defeating enemies in preparation to ultimately fight the evil boss, The Demon.
 
 ## Why A Rogue-like?
 Rogue-likes have an RNG element to them that offers a new experience to the player every time they play the game. Near-endless possibilities means near-endless fun!
@@ -13,7 +13,7 @@ The player must run from room to room in the dungeon to try and find the main ro
 ## Wireframes
 Main Menu
 ![wireframe](./assets/wireframes/start-screen.png)
-- This screen transitions between the 'How to Play' screen and 'Example Room'
+- This screen transitions between the 'How to Play' screen and 'Example Room' (game play)
 
 How to Play
 ![wireframe](./assets/wireframes/controls-screen.png)
@@ -39,14 +39,14 @@ Player Win
 - When I click the 'Play Game' button it takes me to an empty room and I can start controlling the player
 - Pressing the WASD-keys moves the player around
 - Clicking the left-mouse button makes the player attack with their current weapon
-- Clicking the right-mouse button makes the player block with their current shield
-- Pressing the Q-key will replace the player's current weapon with one on the ground in front of the player
+- Clicking the middle-mouse button makes the player block with their current shield
 - Pressing the E-key lets the player interact with chests by opening them and gaining it's contents
-- Pressing the spacebar uses the player's magic ability which shoots a fireball in front of the player
+- Pressing the spacebar uses the player's ability which does an area of effect attack around the player
+- Pressing the Escape-key, while playing, pauses the game and brings up a menu with 'How to Play' and 'Main Menu' options
 - Walking over food or gold causes the player to pick them up: food heals the player while gold increases my score
 - Walking near enemies makes them chase the player
 - Attacking the enemies causes the enemies to take damage and they die and drop coins if their health reaches zero
-- If enemies get close to the player they attack with their weapon and damage the player if they hit them
+- If enemies get close to the player they hurt the player and knock them back
 - If the player loses all their health they lose and the 'Game Over' screen is displayed which includes a 'Game Over' message and a 'Return to Main Menu' button
 - If I click the 'Return to Main Menu' button it takes me to the main menu so I can play again
 - While playing, if I enter a corridor it takes the player to another room in the dungeon
