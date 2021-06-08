@@ -1,5 +1,7 @@
-# Demons-Respite
-GA Solo Project 1
+# Demon's Respite
+
+## Deployed Link
+https://joseph-galante.github.io/Demons-Respite/
 
 ## Overview
 Demon's Respite is a rogue-like dungeon crawler similar to the Binding of Isaac. The game throws the player into a dungeon and requires them to traverse the dungeon's many rooms while defeating enemies in preparation to ultimately fight the evil boss, The Demon.
