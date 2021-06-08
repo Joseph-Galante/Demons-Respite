@@ -1,6 +1,6 @@
 # Demon's Respite
 
-## Deployed Link
+### Deployed Link
 https://joseph-galante.github.io/Demons-Respite/
 
 ## Overview
